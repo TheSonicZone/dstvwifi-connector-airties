@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+	 	<title>lan_dhcp_client.html</title>
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="EXPIRES" content="-1" />
+		<meta http-equiv="Content-Type" content="text/html; CHARSET=UTF-8" />
+
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+		<link rel="stylesheet" type="text/css" href="/style/style_lan.css" />
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+
+		<script type="text/javascript" src="../js/ui.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript">
+
+	$(document).ready(function(){
+	
+		startQuery();
+
+		globalView.addRowClass();
+	});
+
+	var obj;
+		
+	function startQuery()
+	{
+		obj = new uiObject();
+		obj.addQuery({module: "dhcps", key: "lease"});
+		obj.addGet({module: "dhcps", key: "settings"});
+		obj.addGet({module: "lan", key: "settings"});
+		obj.addGet({module: "bridge_vlan", key: "settings"});
+		
+		obj.query();
+		
+		obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.mac", fieldAlias: "mac"});
+		obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.ip", fieldAlias: "ip"});
+		obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.name", fieldAlias: "name"});
+		obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.expire_days", fieldAlias: "expire_days"});
+		obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.expire_hours", fieldAlias: "expire_hours"});
+		
+		obj.addField({table: "dhcpsList", module: "dhcps", field: "iface"});
+		
+		obj.addField({table: "lanList", module: "lan", field: "settings.bridge"});
+		obj.addField({table: "lanList", module: "bridge_vlan", field: "name"});
+		obj.addFilter({table: "lanList", module: "lan", field: "settings.bridge", compareModule: "bridge_vlan", compareField: "name", compareProperty: "inst"});
+		
+		createTable();
+	}
+	
+	function createTable() 
+	{
+		var leases_txt="";
+		leases_txt+="<table class='marginCenter lanDhcpClientListTable globalBorder'><thead><tr>";
+		leases_txt+="<th></th>";
+		leases_txt+="<th>";
+		leases_txt+="<span id=\"__ML_lan_dhcp_client_mac\">MAC Address</span></th>";
+		leases_txt+="<th>";
+		leases_txt+="<span id=\"__ML_lan_dhcp_client_ip\">IP Address</span></th>";
+		leases_txt+="<th><span id=\"__ML_lan_dhcp_client_name\">Name</span></th>";
+		leases_txt+="<th>";
+		leases_txt+="<span id=\"__ML_lan_dhcp_client_lease\">Remained Lease Time</span></th>";
+		leases_txt+="<th>";
+		leases_txt+="<span id=\"__ML_lan_dhcp_client_lan\">LAN Group</span></th>";
+		leases_txt+="</tr></thead>";
+		leases_txt+="<tbody>";
+		var rowCounter = 1;
+		for(var i = 0; i < obj.tables["leaseList"].length; i++)
+		{
+			if(obj.tables["leaseList"][i]["dhcps"]["mac"].value != "00:00:00:00:00:00")
+			{
+				if(obj.tables["leaseList"][i]["dhcps"]["expire_days"].value == "0" && obj.tables["leaseList"][i]["dhcps"]["expire_hours"].value == "0:0:0")
+				{
+					continue;
+				}
+				else
+				{
+					var clientGroup = "";
+					for(var j = 0; j < obj.tables["dhcpsList"].length; j++)
+					{
+						if(obj.tables["dhcpsList"][j]["dhcps"]["iface"].inst == obj.tables["leaseList"][i]["dhcps"]["mac"].inst)
+						{
+							for(var l = 0; l < obj.tables["lanList"].length; l++)
+							{
+								if(obj.tables["lanList"][l]["lan"]["settings.bridge"].inst == obj.tables["dhcpsList"][j]["dhcps"]["iface"].value)
+								{
+									clientGroup = obj.tables["lanList"][l]["bridge_vlan"]["name"].value;
+									break;
+								}
+							}	
+						}
+					}
+					
+					leases_txt+="<tr>";
+					leases_txt+="<td style=\"text-align: right; width: 75px;\" id=\"__V_rowCount" + i + "\" >"+ rowCounter + "." +"</td>"
+					leases_txt+="<td style=\"text-align: left; width: 175px;\" id=\"__V_mac" + i + "\" >"+ obj.tables["leaseList"][i]["dhcps"]["mac"].value +"</td>"
+					leases_txt+="<td style=\"text-align: left; width: 175px;\" id=\"__V_ip" + i + "\" >"+ obj.tables["leaseList"][i]["dhcps"]["ip"].value +"</td>";
+					leases_txt+="<td style=\"text-align: left; width: 192px;\" id=\"__V_name" + i + "\" >" + obj.tables["leaseList"][i]["dhcps"]["name"].value + "</td>";
+					leases_txt+="<td style=\"text-align: left; width: 245px;\" id=\"__V_expire_hours" + i + "\" >"+ obj.tables["leaseList"][i]["dhcps"]["expire_days"].value + " " +  __ML_lan_dhcp_days+ ", " + obj.tables["leaseList"][i]["dhcps"]["expire_hours"].value +" "+ __ML_lan_dhcp_hours +"</td>"
+					leases_txt+="<td style=\"text-align: left; width: 151px;\" id=\"__V_lan_group" + i + "\" >"+ clientGroup +"</td>";
+					leases_txt+="</tr>";
+					rowCounter++;
+				}
+			}
+		}
+	
+		leases_txt+="</tbody></table>";
+		document.getElementById("all_leases").innerHTML = leases_txt;
+		
+		showPage();	
+	}
+
+  </script>
+  
+</head>
+
+
+<body>
+
+	<div id="waitDiv" class="center">
+		<p>
+			<script language="javascript">document.write(__ML_please_wait);</script>
+		</p>
+		<img src="/images/ajax-loader.gif"/>
+	</div>
+
+	<div id="contentDiv" style="display:none">
+		<div class="textCenter title">
+			<span id="__ML_lan_dhcp_client_list" ml="__ML_lan_dhcp_client_list"></span>
+		</div>
+		<div class="textCenter"><span id="__ML_lan_dhcp_client_info">All DHCP Clients can be viewed on this page.</span></div>
+	
+		<div id="all_leases"></div>
+	
+	</div>
+</body>
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="EXPIRES" content="-1"/>
+		<meta http-equiv="Content-Type" content="text/html; CHARSET=UTF-8"/>
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+		<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+		<link href="/style/style_homepage.css" rel="stylesheet" type="text/css" />
+		
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		<script type="text/javascript" src="/global/global_view.js"></script>		
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript" src="/js/OptionalFeatures.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript">
+			var obj;
+	
+			function startQuery()
+			{
+				obj = new uiObject();
+				if(__DEF_alternateQuickSetup != "") {
+					obj.setUiPasswordReturnPage("/wireless/settings/settings_new.html?view=quicksetup");
+				} else {
+					obj.setUiPasswordReturnPage("/wizard.html");
+				}
+				
+				obj.addQuery({module: "usbhost_mngr", key: "device_list"});
+				obj.addGet({module: "route", key: "alias_default_gw"});
+				obj.addQuery({module: "wan", key: "isconnected"});
+				obj.addQuery({module: "wan", key: "localip"});
+				obj.addQuery({module: "sysmgr", key: "uptime"});
+				obj.addQuery({module: "sysmgr", key: "currtime"});
+				obj.addQuery({module: "sysmgr", key: "fwversion"});
+				obj.addQuery({module: "sysmgr", key: "productid"});
+				obj.addQuery({module: "sysmgr", key: "getenv", value: "SERIAL_NUMBER"});
+				obj.addQuery({module: "sysmgr", key: "getenv", value: "BOOTLOADER_VER"});
+				obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_ETH_0"});
+				
+				obj.addGet({module: "dhcps", key: "settings"});
+				obj.addQuery({module: "eth", key: "linkstate"});
+				
+				obj.addQuery({module: "lan", key: "lan_page_features"});
+				obj.addQuery({module: "wireless_core", key: "op_mode_list"});
+	
+				if(getDef("__DEF_ADSLDisabled") == 0)
+				{
+					obj.addQuery({module: "dsl", key: "status"});
+					obj.addQuery({module: "dsl", key: "downlink"});
+					obj.addQuery({module: "dsl", key: "uplink"});
+					obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_DSL_0"});
+				}
+	
+				if(getDef("__DEF_Hide3G") != 1)
+				{
+					obj.addGet({module: "serial", key: "active"});
+	// 				obj.addQuery({module: "serial", key: "active"});
+					obj.addGet({module: "serial", key: "simpin_status"});
+				}
+	
+				if(getDef("__DEF_HideUSB") != 1)
+				{
+					obj.addQuery({module: "usb", key: "linkstate"});
+				}
+	
+				if(getDef("__DEF_HideWirelessMenu") != 1)
+				{
+					obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_WLAN_0"});
+					obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_WLAN_1"});
+					obj.addQuery({module: "devmgr", key: "inst_list", value: "wireless"});
+					obj.addQuery({module: "devmgr", key: "inst_list", value: "wireless_core"});
+					obj.addGet({module: "wireless_ap", key: "ssid"});
+					obj.addGet({module: "wireless_core", key: "enabled"});
+					obj.addGet({module: "wireless", key: "ap0_ssid"});
+					obj.addGet({module: "wireless_core", key: "freq"});
+					obj.addGet({module: "wireless", key: "band"});				
+					obj.addGet({module: "wireless_core", key: "sta_ssid"});
+					obj.addQuery({module: "wireless_core", key: "sta_state"});
+					obj.addQuery({module: "wireless_core", key: "op_mode"});
+					obj.addGet({module: "wireless", key: "sta_ssid"});
+					obj.addQuery({module: "wireless", key: "radiostate"});			
+					obj.addQuery({module: "wireless", key: "opmode"});			
+				}
+	
+				if(getDef("__DEF_HideRouteAPSelection") != 1)
+				{
+					obj.addGet({module: "product", key: "router_mode"});
+				}
+	
+				obj.query();
+				
+				obj.addField({table: "wireless_core_instances", module: "devmgr", field: "wireless_core.inst@counter@", fieldAlias: "instance"});
+				obj.addField({table: "wireless_instances", module: "devmgr", field: "wireless.inst@counter@", fieldAlias: "instance"});
+	
+				if(__DEF_ADSLDisabled == 0)
+				{
+					obj.addField({table: "pageObj", module: "dsl", field: "status.training_stat"});
+					obj.addField({table: "pageObj", module: "dsl", field: "downlink.rate"});
+					obj.addField({table: "pageObj", module: "dsl", field: "uplink.rate"});
+					obj.addFilter({table: "pageObj", module: "dsl", field: "status.training_stat", property: "inst", compareType: "equal", compareValue: "dsl-0"});
+					if(obj.tables["pageObj"][0])
+					{
+						if(obj.tables["pageObj"][0]["dsl"]["status.training_stat"].value == "Showtime")
+						{
+							$("#__V_adsl_connection").text(getML("__ML_connected"));
+							$("#__V_adsl_rate_down").text(obj.tables["pageObj"][0]["dsl"]["downlink.rate"].value);
+							$("#__V_adsl_rate_up").text(obj.tables["pageObj"][0]["dsl"]["uplink.rate"].value);
+						}
+						else
+						{
+							$("#__V_adsl_connection").text(getML("__ML_disconnected"));
+							$("#__V_adsl_rate_down").text("-");
+							$("#__V_adsl_rate_up").text("-");
+						}
+					}
+
+					obj.addField({table: "sysmgrObj", module: "sysmgr", field: "MAC_DSL_0"});
+					obj.addFilter({table: "sysmgrObj", module: "sysmgr", field: "MAC_DSL_0", property: "inst", compareType: "equal", compareValue: "sysmgr-0"});
+					if(obj.tables["sysmgrObj"][0])
+						$("#__V_adsl_mac").text(obj.tables["sysmgrObj"][0]["sysmgr"]["MAC_DSL_0"].value);
+				}
+				else
+				{
+					$("#__V_adsl_connection").text("-");
+					$("#__V_adsl_rate_down").text("-");
+					$("#__V_adsl_rate_up").text("-");
+					$("#__V_adsl_mac").text("-");
+				}
+
+				obj.addField({table: "usbDeviceList", module: "usbhost_mngr", field: "DeviceId@counter@", fieldAlias: "id"});
+				obj.addField({table: "usbDeviceList", module: "usbhost_mngr", field: "Type@counter@", fieldAlias: "type"});
+				obj.addField({table: "usbDeviceList", module: "usbhost_mngr", field: "Status@counter@", fieldAlias : "status", pathField: "DeviceId@counter@"});
+				obj.addField({table: "usbDeviceList", module: "usbhost_mngr", field: "DiskNum@counter@", fieldAlias : "num", pathField: "DeviceId@counter@"});
+				if(obj.tables['usbDeviceList'][0])
+				{
+					var usbDiskCount = 0;
+					var usbPrinterCount = 0;
+					for(var i = 0; i < obj.tables['usbDeviceList'].length; i++)
+					{
+						if(obj.tables['usbDeviceList'][i]['usbhost_mngr']['type'].value == 0)
+						{
+							if(!diskExist(obj.tables['usbDeviceList'][i]['usbhost_mngr']['id'].value.substring(0, 3), obj.tables['usbDeviceList'][i]['usbhost_mngr']['status'].value, obj.tables['usbDeviceList'][i]['usbhost_mngr']['num'].value)) usbDiskCount++;
+						}
+						else if(obj.tables['usbDeviceList'][i]['usbhost_mngr']['type'].value == 1)
+						{
+							usbPrinterCount++;
+						}
+					}
+				}
+
+				var tmpStr = ""
+				for(var i = 0; i < usbDisks.length; i++)
+				{
+					var image = "usb_host_connected.png";
+					if(usbDisks[i].state == "0")
+					{
+						image = "usb_host_not_connected.png";
+					}
+
+					tmpStr += "<span>" + (i > 0 ? ", ": "") + usbDisks[i].num  +":</span><a href='/usb/status.html'><img src=\"/images/"+ image +"\" border='0'/></a>";
+				}
+
+				tmpStr += "<span>"+ (usbPrinterCount > 0 && usbDiskCount > 0 ? ", " : "") + (usbPrinterCount > 0 ? usbPrinterCount + " " + getML("__ML_usb_usb_printers") : "")  + (usbPrinterCount + usbDiskCount > 0 ? " "+getML("__ML_usb_connected") : getML("__ML_usb_connection_status")) +"</span>";
+
+				$("#__V_usb_host_summary").html(tmpStr);
+
+				if(getDef("__DEF_Hide3G") != 1)
+				{
+					obj.addField({table: "3gObj", module: "serial", field: "active"});
+					obj.addField({table: "3gObj", module: "serial", field: "simpin_status"});
+					obj.addFilter({table: "3gObj", module: "serial", field: "active", property: "inst", compareType: "equal", compareValue: "serial-0"});
+				
+					if(obj.tables['3gObj'][0])
+					{
+						if(obj.tables['3gObj'][0]['serial']['active'].value == "1")
+						{
+							var statusText = getML("__ML_3g_active");
+						
+							if(getDef("__DEF_3gStatusType") == "takılı")
+							{
+								statusText = getML("__ML_3g_active2");
+							}
+							
+							$("#__V_3g_connection").html(statusText);
+						}
+						else
+						{
+							var statusText = getML("__ML_3g_passive");
+
+							if(getDef("__DEF_3gStatusType") == "takılı")
+							{
+								statusText = getML("__ML_3g_passive2");
+							}
+							
+							$("#__V_3g_connection").html(statusText);
+						}
+
+						if(obj.tables['3gObj'][0]['serial']['simpin_status'].value == "pin_ok") $("#__V_3g_simstatus").html(getML("__ML_3g_pin_ok"));
+						else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "pin_failed") $("#__V_3g_simstatus").html(getML("__ML_3g_pin_failed"));
+						else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "puk_required") $("#__V_3g_simstatus").html(getML("__ML_3g_puk_required"));
+						else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "pin_required") $("#__V_3g_simstatus").html(getML("__ML_3g_pin_required"));
+						else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "sim_failure") $("#__V_3g_simstatus").html(getML("__ML_3g_sim_failure"));
+						else $("#__V_3g_simstatus").html("");
+					}
+				}
+
+				obj.addField({table: "defaultsGW", module: "route", field: "alias_default_gw"});
+				
+				obj.addField({table: "wanObj", module: "wan", field: "isconnected"});
+				obj.addField({table: "wanObj", module: "wan", field: "localip"});
+				if(obj.tables['defaultsGW'][0] != undefined) 
+				{
+					obj.addFilter({table: "wanObj", module: "wan", field: "isconnected", property: "inst", compareType: "equal", compareValue: obj.tables['defaultsGW'][0]['route']['alias_default_gw'].value});
+				}
+				else
+				{
+					obj.addFilter({table: "wanObj", module: "wan", field: "isconnected", property: "inst", compareType: "equal", compareValue: "-"});
+				}
+				if(obj.tables['wanObj'][0])
+				{
+					if(obj.tables['wanObj'][0]['wan']['isconnected'].value == 1)
+					{
+						$("#__V_internet_connection").text(getML("__ML_connected"));
+						$("#__V_internet_ip").text(obj.tables['wanObj'][0]['wan']['localip'].value);
+					}
+					else
+					{
+						$("#__V_internet_connection").text(getML("__ML_disconnected"));
+						$("#__V_internet_ip").text("-");
+					}
+				}
+
+				obj.addField({table: "pageObj", module: "sysmgr", field: "currtime.hour"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "currtime.min"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "currtime.sec"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "currtime.day"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "currtime.month"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "currtime.year"});
+				var clock = obj.tables["pageObj"][0]["sysmgr"]["currtime.day"].value + "." +
+						obj.tables["pageObj"][0]["sysmgr"]["currtime.month"].value + "." +
+						obj.tables["pageObj"][0]["sysmgr"]["currtime.year"].value + " " +
+						obj.tables["pageObj"][0]["sysmgr"]["currtime.hour"].value + ":" +
+						obj.tables["pageObj"][0]["sysmgr"]["currtime.min"].value + ":" +
+						obj.tables["pageObj"][0]["sysmgr"]["currtime.sec"].value;
+					$("#__V_clock").text(clock);
+
+
+				obj.addField({table: "pageObj", module: "sysmgr", field: "uptime.days"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "uptime.hours"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "uptime.minutes"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "uptime.seconds"});
+				var upTime = obj.tables["pageObj"][0]["sysmgr"]["uptime.days"].value + ":" +
+						obj.tables["pageObj"][0]["sysmgr"]["uptime.hours"].value + ":" +
+						obj.tables["pageObj"][0]["sysmgr"]["uptime.minutes"].value + ":" +
+						obj.tables["pageObj"][0]["sysmgr"]["uptime.seconds"].value;
+				$("#__V_uptime").text(upTime);
+
+				obj.addField({table: "pageObj", module: "sysmgr", field: "productid"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "fwversion"});
+				$("#__V_firmware").text(obj.tables["pageObj"][0]["sysmgr"]["fwversion"].value);
+
+				obj.addField({table: "pageObj", module: "sysmgr", field: "BOOTLOADER_VER"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "MAC_ETH_0"});
+				obj.addField({table: "pageObj", module: "sysmgr", field: "SERIAL_NUMBER"});
+				$("#__V_serial_no").text(obj.tables["pageObj"][0]["sysmgr"]["SERIAL_NUMBER"].value);
+
+				obj.addField({table: "dhcpsObj", module: "dhcps", field: "enabled"});
+				obj.addFilter({table: "dhcpsObj", module: "dhcps", field: "enabled", property: "inst", compareType: "equal", compareValue: "dhcps-0"});
+				if(obj.tables["dhcpsObj"][0])
+				{
+					if(obj.tables["dhcpsObj"][0]["dhcps"]["enabled"].value == 1)
+					{
+						$("#__V_dhcps_state").text(getML("__ML_dhcps_enabled"));
+					}
+					else
+					{
+						$("#__V_dhcps_state").text(getML("__ML_dhcps_disabled"));
+					}
+				}
+				else
+				{
+					$("#__V_dhcps_state").text(getML("__ML_dhcps_disabled"));
+				}
+
+				obj.addField({table: "ethObj", module: "eth", field: "linkstate"});
+				obj.addFilter({table: "ethObj", module: "eth", field: "linkstate", property: "inst", compareType: "equal", compareValue: "eth-0"});
+				if(obj.tables["ethObj"][0])
+				{
+					if(obj.tables["ethObj"][0]["eth"]["linkstate"].value == 1)
+					{
+						$("#__V_eth_linkstate").text(getML("__ML_connected"));
+					}
+					else
+					{
+						$("#__V_eth_linkstate").text(getML("__ML_disconnected"));
+					}
+				}
+
+				if(getDef("__DEF_HideUSB") != 1)
+				{
+					obj.addField({table: "usbObj", module: "usb", field: "linkstate"});
+					obj.addFilter({table: "usbObj", module: "usb", field: "linkstate", property: "inst", compareType: "equal", compareValue: "usb-0"});
+					if(obj.tables["usbObj"][0])
+					{
+						if(obj.tables["usbObj"][0]["usb"]["linkstate"].value == 1)
+						{
+							$("#__V_usb_linkstate").text(getML("__ML_connected"));
+						}
+						else
+						{
+							$("#__V_usb_linkstate").text(getML("__ML_disconnected"));
+						}
+					}
+				}
+
+				if(getDef("__DEF_HideWirelessMenu") != 1)
+				{
+					obj.addField({table: "wirelessObj", module: "wireless_ap", field: "ssid"});
+					obj.addFilter({table: "wirelessObj", module: "wireless_ap", field: "ssid", property: "inst", compareType: "equal", compareValue: "wireless_ap-0"});
+					obj.addField({table: "wirelessObj", module: "wireless", field: "ap0_ssid"});
+
+					obj.addField({table: "wirelessObj", module: "wireless_core", field: "freq"});
+					obj.addFilter({table: "wirelessObj", module: "wireless_core", field: "freq", property: "inst", compareType: "equal", compareValue: "wireless_core-0"});
+				
+					obj.addField({table: "wirelessObj", module: "wireless", field: "band"});
+
+					obj.addField({table: "wirelessObj", module: "wireless_core", field: "enabled"});
+					obj.addFilter({table: "wirelessObj", module: "wireless_core", field: "enabled", property: "inst", compareType: "equal", compareValue: "wireless_core-0"});
+					
+					obj.addField({table: "wirelessObj", module: "wireless_core", field: "sta_ssid"});
+					obj.addField({table: "wirelessObj", module: "wireless_core", field: "sta_state", fieldAlias: "radiostate"});
+					obj.addField({table: "wirelessObj", module: "wireless_core", field: "op_mode", fieldAlias: "opmode"});
+
+					obj.addField({table: "wirelessObj", module: "wireless", field: "sta_ssid"});
+					obj.addField({table: "wirelessObj", module: "wireless", field: "opmode"});
+					obj.addField({table: "wirelessObj", module: "wireless", field: "radiostate"});
+					
+					obj.addField({table: "wirelessObj", module: "sysmgr", field: "MAC_WLAN_0"});
+					obj.addField({table: "wirelessObj", module: "sysmgr", field: "MAC_WLAN_1"});
+
+					if(obj.tables["wirelessObj"][0])
+					{
+						if(obj.tables.wirelessObj[0].wireless_core) {
+							switch(obj.tables.wirelessObj[0].wireless_core.opmode.value) {
+								case "sta":
+									$("#__ML_wireless_connected_ssid_1").html(__ML_wireless_connected_sta_ssid);
+									break;
+								case "repeater":
+									$("#__ML_wireless_connected_ssid_1").html(__ML_wireless_connected_sta_ssid);
+									break;
+							}
+							if(obj.tables.wirelessObj[0].wireless_core.opmode.value == "sta" || obj.tables.wirelessObj[0].wireless_core.opmode.value == "repeater") {
+								$("#wirelessRow1").hide();
+								$("#connected_ap_row_1").show();
+								if(obj.tables.wirelessObj[0].wireless_core.radiostate.value == "STA_CONNECTED") {
+									$("#__V_wireless_connected_ap_1").html(obj.tables.wirelessObj[0].wireless_core.sta_ssid.value);
+								} else {
+									$("#__V_wireless_connected_ap_1").html("");
+								}
+							}
+						}
+						
+						__ML_wireless_connected_repeater_ssid
+						
+						if(obj.tables.wirelessObj[0].wireless) {
+							switch(obj.tables.wirelessObj[0].wireless.opmode.value) {
+								case "sta":
+									$("#__ML_wireless_connected_ssid_2").html(__ML_wireless_connected_sta_ssid);
+									break;
+								case "repeater":
+									$("#__ML_wireless_connected_ssid_2").html(__ML_wireless_connected_repeater_ssid);
+									break;
+							}
+							if(obj.tables.wirelessObj[0].wireless.opmode.value == "sta" || obj.tables.wirelessObj[0].wireless.opmode.value == "repeater") {
+								$("#wirelessRow2").hide();
+								$("#connected_ap_row_2").show();
+								if(obj.tables.wirelessObj[0].wireless.radiostate.value == "WL_RADIO_UP") {
+									$("#__V_wireless_connected_ap_2").html(obj.tables.wirelessObj[0].wireless.sta_ssid.value);
+								} else {
+									$("#__V_wireless_connected_ap_2").html("");
+								}
+							}
+						}
+						
+						$("#__V_wireless_mac").html(obj.tables['wirelessObj'][0]['sysmgr']['MAC_WLAN_0'].value);
+						$("#__V_wireless_mac_1").html(obj.tables['wirelessObj'][0]['sysmgr']['MAC_WLAN_1'].value);
+						
+						$("#__V_wireless_network_name").html(obj.tables["wirelessObj"][0]["wireless_ap"]["ssid"].value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+						
+						var freqValue = obj.tables["wirelessObj"][0]["wireless_core"]["freq"].value == "2400" ? "2.4 GHz" : "5 GHz";
+						
+						$("[value=__V_wireless_freq]").each(function(){$(this).html(freqValue)});
+						
+						
+						if(obj.tables["wirelessObj"][0]["wireless"])
+						{
+							$("#__V_wireless_network_name_2").html(obj.tables["wirelessObj"][0]["wireless"]["ap0_ssid"].value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+							
+							freqValue = obj.tables["wirelessObj"][0]["wireless"]["band"].value == "2400" ? "2.4 GHz" : "5 GHz";
+							
+							$("[value=__V_wireless_freq_2]").each(function(){$(this).html(freqValue)});
+						}
+
+						if(obj.tables["wirelessObj"][0]["wireless_core"]["enabled"].value == 1)
+						{
+							$("#__V_wireless_network_status").text(getML("__ML_wireless_enabled"));
+						}
+						else
+						{
+							$("#__V_wireless_network_status").text(getML("__ML_wireless_disabled"));
+						}
+					}
+				}
+
+				if(getDef("__DEF_HideRouteAPSelection") != 1)
+				{
+					obj.addField({table: "productObj", module: "product", field: "router_mode"});
+					obj.addFilter({table: "productObj", module: "product", field: "router_mode", property: "inst", compareType: "equal", compareValue: "product-0"});
+					if(obj.tables["productObj"][0])
+					{
+						if(obj.tables["productObj"][0]["product"]["router_mode"].value == "ap")
+						{
+							$("#__V_ap_router_mode").html(getML("__ML_access_point"));
+						}
+						else if(obj.tables["productObj"][0]["product"]["router_mode"].value == "router")
+						{
+							$("#__V_ap_router_mode").html("Router");
+						}
+					}
+				}
+
+				obj.addField({table: "lanPageFeatures", module: "lan", field: "DhcpOnOff"});
+				obj.addField({table: "lanPageFeatures", module: "lan", field: "DhcpServer"});
+				obj.addField({table: "lanPageFeatures", module: "lan", field: "DhcpRelay"});
+				obj.addField({table: "lanPageFeatures", module: "lan", field: "DhcpClient"});
+
+				if(obj.tables["lanPageFeatures"][0])
+				{
+					if(obj.tables["lanPageFeatures"][0]["lan"]["DhcpServer"].value == "0")
+					{
+						$("#dhcp_server").hide();
+					}
+				}
+
+				obj.addField({table: "opModeList", module: "wireless_core", field: "op_mode_list"});
+	
+				if(obj.tables['opModeList'][0])
+				{
+					var opModeList = obj.tables['opModeList'][0]['wireless_core']['op_mode_list'].value.split("|");
+				
+					if(opModeList[0] == "sta" && opModeList.length < 2) 
+					{
+						$("#wirelessRow1").hide();
+						$("#wirelessRow2").hide();
+					}
+				}
+
+				$("#__V_bootloader").html(obj.tables['pageObj'][0]['sysmgr']['BOOTLOADER_VER'].value);
+				$("#__V_eth_mac").html(obj.tables['pageObj'][0]['sysmgr']['MAC_ETH_0'].value);
+
+				$("table").addClass("ui-corner-all");
+				
+				showPage();
+			}
+	
+			var usbDisks = [];
+	
+			function diskExist(diskId, state, diskNum)
+			{
+				for(var i = 0; i < usbDisks.length; i++)
+				{
+					if(usbDisks[i].id == diskId)
+					{
+						if(usbDisks[i].state == "0" && state == "1")
+						{
+							usbDisks[i].state = "1";
+						}
+						return true;
+					}
+				}
+	
+				usbDisks.push({"id" : diskId, "state" : state, "num" : diskNum});
+				return false;
+			}
+	
+			$(document).ready(function()
+			{
+				startQuery();
+
+				if(__DEF_ShowReportPageInformation != 1) $(".reportPageInformation").hide(); 
+
+				if(__DEF_HideWirelessMenu == 1)
+				{
+					$("#wirelessRow1").hide();
+					$("#wirelessRow1_1").hide();
+					$("#wirelessRow2").hide();
+					$("[grp=wireless]").hide();
+				}
+				else
+				{
+					if(obj.tables.wireless_core_instances.length + obj.tables.wireless_instances.length < 2)
+					{
+						$("#wireless_mac_row_1").hide();
+						$("#mac_id").hide();
+						$("#mac_id_1").hide();
+					}
+				}
+
+				if($("#__V_wireless_network_name_2").html() == "") $("#wirelessRow1_1").hide();	
+				if(__DEF_ADSLDisabled == 1)
+				{
+					$("#adsl_connection_row").hide();
+					$("#adsl_rate_row").hide();
+					$("#adsl_mac_row").hide();
+					$("#dsl_mac_row").hide();
+				}
+				if(__DEF_HideADSLMenu == 1 && __DEF_HideInternetMenu == 1)
+				{
+					$("#internet_connection_row").hide();
+					$("#internet_ip_row").hide();
+				}
+				if(getDef("__DEF_HideUsb_Menu") == "1")
+				{
+					$("#usbHostRow").hide();
+				}
+				if(getDef("__DEF_Hide3G") == 1)
+				{
+					$("#3g_connection_row").hide();
+					$("#3g_simstatus_row").hide();
+				}
+				
+				try{
+				  if(__DEF_HideRouteAPSelection != 1)
+				  {
+				    document.getElementById("operation_mode_row").style.display = "";
+				  }
+				}catch(e){}
+
+				if(__DEF_HideUSB == 1) document.getElementById("usb_row").style.display="none";
+				
+				if(__DEF_model_name != "")
+				{
+					$("#__V_model_name").html(__DEF_model_name);
+				}
+				else
+				{
+					$("#__V_model_name").html(obj.tables["pageObj"][0]["sysmgr"]["productid"].value);
+				}
+				
+				globalView.addRowClass();
+			});
+	
+		</script>
+	</head>
+	<body id="content_body">
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		<div id="contentDiv" style="display:none">
+			<div class="textCenter title">
+				<span id="__ML_homepage" ml="__ML_homepage"></span>
+			</div>
+			<div class="marginCenter globalHeaderInfoDiv homepageInfoDiv">
+				<span id="__ML_home_intro" ml="__ML_home_intro"></span>
+			</div>
+				<div id="tableContainer">
+				<table id="homepage_table" class="globalTable homepageTable marginCenter globalBorder">
+					<tbody>
+					<tr id="internet_connection_row">
+						<td>
+							<span id="__ML_internet_connection">Internet Connection: </span>
+						</td>
+						<td>
+							<span id="__V_internet_connection"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="adsl_connection_row">
+						<td>
+							<span id="__ML_adsl_connection">ADSL Connection: </span>
+						</td>
+						<td>
+							<span id="__V_adsl_connection"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="adsl_rate_row">
+						<td>
+							<span id="__ML_adsl_rate">ADSL Rate(Kbps): </span>
+						</td>
+						<td>
+							<span id="__V_adsl_rate_up"> &nbsp; </span>
+							/
+							<span id="__V_adsl_rate_down"> &nbsp;</span>
+						</td>
+					</tr>
+					<tr id="3g_connection_row">
+						<td>
+							<span id="__ML_3g_connection">ADSL Connection: </span>
+						</td>
+						<td>
+							<span id="__V_3g_connection"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="3g_simstatus_row">
+						<td>
+							<span id="__ML_3g_simstatus">SIM Status: </span>
+						</td>
+						<td>
+							<span id="__V_3g_simstatus"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="internet_ip_row">
+						<td>
+							<span id="__ML_internet_ip">Internet IP Address: </span>
+						</td>
+						<td>
+							<span id="__V_internet_ip" style="color: red; font-size: 15px; font-weight: bold;"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="adsl_mac_row">
+						<td>
+							<span id="__ML_adsl_mac">ADSL MAC Address: </span>
+						</td>
+						<td>
+							<span id="__V_adsl_mac"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span id="__ML_ethernet_connection">Ethernet: </span>
+						</td>
+						<td>
+							<span id="__V_eth_linkstate"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="usb_row">
+						<td>
+							<span id="__ML_usb_connection">USB: </span>
+						</td>
+						<td>
+							<span id="__V_usb_linkstate"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="dhcp_server">
+						<td>
+							<span id="__ML_dhcp_server">DHCP Server: </span>
+						</td>
+						<td>
+							<span id="__V_dhcps_state"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="connected_ap_row_1" style="display: none;">
+						<td>
+							<span id="__ML_wireless_connected_ssid_1"></span>&nbsp;(<span value="__V_wireless_freq"></span>):
+						</td>
+						<td>
+							<span id="__V_wireless_connected_ap_1"></span>
+						</td>
+					</tr>
+					<tr id="connected_ap_row_2" style="display: none;">
+						<td>
+							<span id="__ML_wireless_connected_ssid_2"></span>&nbsp;(<span value="__V_wireless_freq_2"></span>):
+						</td>
+						<td>
+							<span id="__V_wireless_connected_ap_2"></span>
+						</td>
+					</tr>
+					<tr id="wirelessRow1">
+						<td>
+							<span id="__ML_wireless_network_name">Wireless Network Name</span> (<span id="__V_wireless_freq" value="__V_wireless_freq"></span>):
+						</td>
+						<td>
+							<span id="__V_wireless_network_name"></span>
+						</td>
+					</tr>
+					<tr id="wirelessRow1_1">
+						<td>
+							<span id="__ML_wireless_network_name">Wireless Network Name</span> (<span id="__V_wireless_freq_2" value="__V_wireless_freq_2"></span>):
+						</td>
+						<td>
+							<span id="__V_wireless_network_name_2"></span>
+						</td>
+					</tr>
+					<tr id="wirelessRow2">
+						<td>
+							<span id="__ML_wireless_network_status">Wireless Network Status</span>:
+						</td>
+						<td>
+							<span id="__V_wireless_network_status"></span>
+						</td>
+					</tr>
+					<tr class="reportPageInformation">
+						<td><span id="__ML_model_name">Model Name:</span></td>
+						<td><span id="__V_model_name"></span></td>
+					</tr>
+					<tr>
+						<td>
+							<span id="__ML_firmware">Firmware Version: </span>
+						</td>
+						<td>
+							<span id="__V_firmware" class="firmware"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr class="reportPageInformation">
+						<td><span id="__ML_bootloader">Boot Loader:</span></td>
+						<td><span id="__V_bootloader"></span></td>
+					</tr>
+					<tr>
+						<td>
+							<span id="__ML_serial_no">Serial Number: </span>
+						</td>
+						<td>
+							<span id="__V_serial_no"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span id="__ML_uptime">System Uptime: </span>
+						</td>
+						<td>
+							<span id="__V_uptime"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span id="__ML_clock">System Clock: </span>
+						</td>
+						<td>
+							<span id="__V_clock"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr id="operation_mode_row" style="display:none;">
+						<td>
+							<span id="__ML_router_ap">Operation Mode: </span>
+						</td>
+						<td>
+							<a href="routerApSelection.html"><span id="__V_ap_router_mode"></span></a>
+						</td>
+					</tr>
+					<tr id="usbHostRow">
+						<td>
+							<span id="__ML_homepage_usb_host_label"></span>
+						</td>
+						<td>
+							<div id="__V_usb_host_summary"></div>
+						</td>
+					</tr>
+					<tr id="ethernet_mac_row" class="reportPageInformation">
+						<td><span id="__ML_eth_mac">Ethernet MAC Address:</span></td>
+						<td><span id="__V_eth_mac"></span></td>
+					</tr>
+					<tr id="wireless_row" grp="wireless" class="reportPageInformation">
+						<td><span id="__ML_wireless_mac">Wireless MAC Address</span><span id="mac_id"> 1</span>:</td>
+						<td><span id="__V_wireless_mac"></span></td>
+					</tr>
+					<tr id="wireless_mac_row_1" grp="wireless" class="reportPageInformation">
+						<td><span id="__ML_wireless_mac">Wireless MAC Address</span><span id="mac_id_1"> 2</span>:</td>
+						<td><span id="__V_wireless_mac_1"></span></td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>

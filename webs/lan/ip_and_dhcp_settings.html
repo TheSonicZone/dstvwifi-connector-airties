@@ -1,0 +1,373 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="EXPIRES" content="-1" />
+		<meta http-equiv="Content-Type" content="text/html; CHARSET=UTF-8" />
+	
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+		<link rel="stylesheet" type="text/css" href="/style/style_lan.css" />
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+	
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/ipcalc.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script language="javascript" type="text/javascript">
+	
+			$(document).ready(function()
+			{
+				startQuery();
+				
+				globalView.addButtonClass();
+				globalView.addRowClass();
+			});
+			
+			var staticInst = "";
+			var staticIp = "";
+			var staticNetmask = "";
+			var staticDhcps = "";
+			var dhcpcInst = "";
+			var dhcpcIp = "";
+			var dhcpcNetmask = "";
+			var deletedLans = [];
+	
+			var obj;
+		
+			function startQuery()
+			{
+				obj = new uiObject();
+				obj.addGet({module: "lan", key: "settings"});
+				obj.addGet({module: "bridge_vlan", key: "settings"});
+				obj.addGet({module: "static", key: "settings"});
+				
+				obj.addGet({module: "dhcps", key: "settings"});
+				obj.addGet({module: "dhcprelay", key: "settings"});
+				
+				obj.addQuery({module: "dhcpc", key: "localip"});
+				obj.addQuery({module: "dhcpc", key: "netmask"});
+				
+				obj.query();
+				
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "iface"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "name"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "enabled"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "startip"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "endip"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "leasetime"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "subnet"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "gw"});
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "dns"});
+				
+				obj.addField({table: "dhcpcList", module: "dhcpc", field: "localip"});
+				obj.addField({table: "dhcpcList", module: "dhcpc", field: "netmask"});
+				
+				obj.addField({table: "dhcpRelayList", module: "dhcprelay", field: "name"});
+				obj.addField({table: "dhcpRelayList", module: "dhcprelay", field: "connection_lan"});
+				obj.addField({table: "dhcpRelayList", module: "dhcprelay", field: "server_ip"});
+				
+				obj.addField({table: "lanList", module: "lan", field: "settings.static"});
+				obj.addField({table: "lanList", module: "lan", field: "settings.bridge"});
+				obj.addField({table: "lanList", module: "lan", field: "settings.type"});
+				obj.addField({table: "lanList", module: "lan", field: "settings.dhcpc"});
+	
+				obj.addField({table: "bridgeList", module: "bridge_vlan", field: "name"});
+				
+				obj.addField({table: "staticList", module: "static", field: "settings.ip"});
+				obj.addField({table: "staticList", module: "static", field: "settings.mask"});
+				
+				createTable();
+				checkStaticAndSaveButton();
+			}
+			
+			function createTable()
+			{
+				var tableString = "<table class='marginCenter widthAuto globalBorder'>";
+				tableString += "<thead><tr><th>";
+				tableString +=          "<span id='__ML_lan_ip_dhcp_settings_dhcp_server_name'>" + __ML_lan_ip_dhcp_settings_dhcp_server_name + "</span>";
+				tableString +=        "</th>";
+				tableString +=        "<th>";
+				tableString +=          "<span id='__ML_lan_ip_dhcp_settings_dhcp'>" + __ML_lan_ip_dhcp_settings_dhcp + "</span>";
+				tableString +=        "</th>";
+				tableString +=        "<th class='memberVlans'>";
+				tableString +=          "<span id='__ML_lan_ip_dhcp_settings_member_vlans'>" + __ML_lan_ip_dhcp_settings_member_vlans + "</span>";
+				tableString +=        "</th>";
+				tableString +=        "<th colspan='2'></th></tr></thead>";
+				tableString +=        "<tbody>";
+				
+				for(var i = 0; i < obj.tables['lanList'].length; i++)
+				{
+					var tempName = ""; var nameCounter = 0;
+					var tempIpSettings = ""; var ipCounter = 0;
+					var tempVlan = ""; var vlanCounter = 0;
+									
+					for(var x = 0; x < obj.tables["staticList"].length; x++)
+					{
+						if(obj.tables["staticList"][x]["static"]["settings.ip"].inst == obj.tables['lanList'][i]['lan']['settings.static'].value)
+						{
+							if(obj.tables['lanList'][i]['lan']['settings.static'].inst == "lan-0")
+							{
+								staticInst = obj.tables["lanList"][i]["lan"]["settings.static"].value;
+								staticIp = obj.tables["staticList"][x]["static"]["settings.ip"].value;
+								staticNetmask = obj.tables["staticList"][x]["static"]["settings.mask"].value;
+							}
+							tempIpSettings += (tempIpSettings != "" ? "<br/>" : "") + "<span id='desc_" + i + "_" + ipCounter + "'>static</span>&nbsp;&nbsp;<span id='dhcp_" + i + "_" + ipCounter + "'>" +  obj.tables["staticList"][x]["static"]["settings.ip"].value + " / " + obj.tables["staticList"][x]["static"]["settings.mask"].value + "</span>";
+	
+						}
+					}
+				
+					for(var x = 0; x < obj.tables["bridgeList"].length; x++)
+					{
+						if(obj.tables["bridgeList"][x]["bridge_vlan"]["name"].inst == obj.tables['lanList'][i]['lan']['settings.bridge'].value)
+						{
+							tempVlan += (tempVlan != "" ? "<br/>" : "") + "<span id='vlan_" + i + "_" + vlanCounter + "'>" + obj.tables["bridgeList"][x]["bridge_vlan"]["name"].value + "</span>";
+						}
+					}
+					
+					for(var x = 0; x < obj.tables["dhcpRelayList"].length; x++)
+					{
+						if(obj.tables["dhcpRelayList"][x]["dhcprelay"]["connection_lan"].value == obj.tables['lanList'][i]['lan']['settings.type'].inst)
+						{
+							tempIpSettings += (tempIpSettings != "" ? "<br/>" : "") + "<span id='desc_" + i + "_" + ipCounter + "'>relay</span>&nbsp;&nbsp;<span id='dhcp_" + i + "_" + ipCounter + "'>" +  obj.tables["dhcpRelayList"][x]["dhcprelay"]["server_ip"].value + "</span>";
+	
+							tempName += (tempName != "" ? "<br/>" : "") + "<span id='name_" + i + "_0'>" + obj.tables['dhcpRelayList'][x]['dhcprelay']['name'].value + "</span>";
+						}
+					}
+	
+					for(var x = 0; x < obj.tables["dhcpsList"].length; x++)
+					{
+						if(obj.tables["dhcpsList"][x]["dhcps"]["iface"].value == obj.tables['lanList'][i]['lan']['settings.type'].inst)
+						{
+							if(obj.tables['lanList'][i]['lan']['settings.type'].inst == "lan-0")
+							{
+								staticDhcps = obj.tables["dhcpsList"][x]["dhcps"]["iface"].inst;
+							}
+	
+							tempIpSettings += (tempIpSettings != "" ? "<br/>" : "") + "<span id='desc_" + i + "_" + ipCounter + "'>dhcps</span>&nbsp;&nbsp;<span id='dhcp_" + i + "_" + ipCounter + "'>" +  obj.tables["dhcpsList"][x]["dhcps"]["startip"].value + " / " +  obj.tables["dhcpsList"][x]["dhcps"]["endip"].value + "</span>";
+	
+							tempName += (tempName != "" ? "<br/>" : "") + "<span id='name_" + i + "_0'>" + obj.tables["dhcpsList"][x]["dhcps"]["name"].value + "</span>";
+						}
+					}
+	
+					for(var x = 0; x < obj.tables["dhcpcList"].length; x++)
+					{
+						if(obj.tables["dhcpcList"][x]["dhcpc"]["netmask"].inst == obj.tables['lanList'][i]['lan']['settings.dhcpc'].value)
+						{
+							if(obj.tables['lanList'][i]['lan']['settings.type'].inst == "lan-0")
+							{
+								dhcpcInst = obj.tables["lanList"][i]["lan"]["settings.dhcpc"].value;
+								dhcpcIp = obj.tables["dhcpcList"][x]["dhcpc"]["localip"].value;
+								dhcpcNetmask = obj.tables["dhcpcList"][x]["dhcpc"]["netmask"].value;
+							}
+	
+							tempIpSettings += (tempIpSettings != "" ? "<br/>" : "") + "<span id='desc_" + i + "_" + ipCounter + "'>dhcpc</span>&nbsp;&nbsp;<span id='dhcp_" + i + "_" + ipCounter + "'>" +  obj.tables["dhcpcList"][x]["dhcpc"]["localip"].value + " / " + obj.tables["dhcpcList"][x]["dhcpc"]["netmask"].value + "</span>";
+	
+							tempName += (tempName != "" ? "<br/>" : "") + "<span id='name_" + i + "_0'>" +  (__ML_lan_dhcp_setup_dhcp_client_agent + " " + obj.tables["dhcpcList"][x]["dhcpc"]["netmask"].inst.replace(/[^0-9]+/, '')) + "</span>";
+						}
+					}
+	
+					tableString += "<tr><td>" + tempName + "</td><td>" + tempIpSettings + "</td><td class='memberVlans'>" + tempVlan + "</td><td><input id='edit_button_" + i + "' type='button' onclick='redirectEditPage(\"" + obj.tables['lanList'][i]['lan']['settings.static'].inst + "\")' value=\"" + __ML_edit + "\" /></td>" + (obj.tables['lanList'][i]['lan']['settings.static'].inst == "lan-0" ? "" : "<td><input id='delete_button_" + i + "' type='button' onclick=\"deleteLine('" + obj.tables['lanList'][i]['lan']['settings.static'].inst + "')\" value='" + getML("__ML_delete") + "' /></td></tr>");
+				}
+	
+				if(getDef("__DEF_ShowNewDhcpButton")) tableString += "<tr><td colspan='10' style='text-align: right;'><input id='new_button' type='button' onclick='newDhcp()' value=" + getML("__ML_new") + " /></td></tr>";
+				tableString += "</tbody></table>";
+				$("#dhcp_server_div").html(tableString);
+				
+				if(getDef("__DEF_ShowVLANMenu") == "0") $(".memberVlans").hide();
+				
+				globalView.addButtonClass();
+			}
+	
+			function checkStaticAndSaveButton()
+			{
+				if(staticIp == "")
+				{
+					$("[group='static']").hide();
+					if(obj.tables['lanList'].length < 2) $("[group='save']").hide();
+				}
+				else
+				{
+					$("#__V_static_0_ip").text(staticIp);
+					$("#__V_static_0_netmask").text(staticNetmask);
+				}
+				if(dhcpcInst == "")
+				{
+					$("[group='dhcpc']").hide();
+				}
+				else
+				{
+					$("#__V_dhcpc_vlan_ip").html(dhcpcIp);
+					$("#__V_dhcpc_vlan_netmask").html(dhcpcNetmask);
+				}
+
+				if(obj.tables['lanList'].length > 1) {
+					$(".footer").show();
+				}
+				showPage();
+			}
+	
+			function redirectEditPage(inst)
+			{
+				window.location.href="/lan/dhcp_setup.html?id=" + inst;
+			}
+	
+			function newDhcp()
+			{
+				redirectEditPage("");
+			}
+	
+			function deleteLine(lanId)
+			{
+				for(var i = 0; i < obj.tables['lanList'].length; i++)
+				{
+					if(obj.tables['lanList'][i]['lan']['settings.type'].inst == lanId && lanId != "lan-0")
+					{
+						deletedLans.push(obj.tables['lanList'][i]);
+						obj.tables['lanList'].splice(i, 1);
+						break;
+					}
+				}
+				createTable();
+			}
+	
+			function ClickCancel()
+			{
+				reloadPage();
+			}
+	
+			function ClickSave()
+			{
+				disablePage();
+				beginXML();
+	
+				for(var i = 0; i < deletedLans.length; i++)
+				{
+					if(deletedLans[i]['lan']['settings.type'].inst != "lan-0")
+					{
+						if(deletedLans[i]['lan']['settings.type'].value == "dhcpc" && deletedLans[i]['lan']['settings.dhcpc'].value != "")
+						{
+							addCommand("devmgr-0", "stop_inst", deletedLans[i]['lan']['settings.dhcpc'].value);
+							addCommand("devmgr-0", "delete_inst", deletedLans[i]['lan']['settings.dhcpc'].value);
+							addCommand("cfgmgr-0", "commit", deletedLans[i]['lan']['settings.dhcpc'].value);
+						}
+	
+						for(var j = 0; j < obj.tables['dhcpRelayList'].length; j++)
+						{
+							if(obj.tables['dhcpRelayList'][j]['dhcprelay']['connection_lan'].value == deletedLans[i]['lan']['settings.type'].inst)
+							{
+								addCommand("devmgr-0", "stop_inst", obj.tables['dhcpRelayList'][j]['dhcprelay']['connection_lan'].inst);
+								addCommand("devmgr-0", "delete_inst", obj.tables['dhcpRelayList'][j]['dhcprelay']['connection_lan'].inst);
+								addCommand("cfgmgr-0", "commit", obj.tables['dhcpRelayList'][j]['dhcprelay']['connection_lan'].inst);
+							}
+						}
+						
+						for(var j = 0; j < obj.tables['dhcpsList'].length; j++)
+						{
+							if(obj.tables['dhcpsList'][j]['dhcps']['iface'].value == deletedLans[i]['lan']['settings.type'].inst)
+							{
+								addCommand("devmgr-0", "stop_inst", obj.tables['dhcpsList'][j]['dhcps']['iface'].inst);
+								addCommand("devmgr-0", "delete_inst", obj.tables['dhcpsList'][j]['dhcps']['iface'].inst);
+								addCommand("cfgmgr-0", "commit", obj.tables['dhcpsList'][j]['dhcps']['iface'].inst);
+							}
+						}
+						if(deletedLans[i]['lan']['settings.type'].value == "static" && deletedLans[i]['lan']['settings.static'].value != "")
+						{
+							addCommand("devmgr-0", "stop_inst", deletedLans[i]['lan']['settings.static'].value);
+							addCommand("devmgr-0", "delete_inst", deletedLans[i]['lan']['settings.static'].value);
+							addCommand("cfgmgr-0", "commit", deletedLans[i]['lan']['settings.static'].value);
+						}
+	
+						if(deletedLans[i]['lan']['settings.type'].inst != "")
+						{
+							addCommand("devmgr-0", "stop_inst", deletedLans[i]['lan']['settings.type'].inst);
+							addCommand("devmgr-0", "delete_inst", deletedLans[i]['lan']['settings.type'].inst);
+							addCommand("cfgmgr-0", "commit", deletedLans[i]['lan']['settings.type'].inst);
+						}
+					}
+				}
+				addCommand("cfgmgr-0", "save", "");
+				endXML();
+				sendAJAX(reloadPage);
+			}
+	
+			function reloadPage()
+			{
+				disablePage();
+				startQuery();
+			}
+	
+		</script>
+	</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		<div id="contentDiv" style="display:none">
+			<div class="textCenter title">
+				<span id="__ML_lan_ip_dhcp_settings_caption" ml="__ML_lan_ip_dhcp_settings_caption"></span>
+			</div>
+			<div align="justify">
+				<span id="__ML_lan_ip_dhcp_settings_intro"></span>
+			</div>
+			<table id="dhcpc_table" class="marginCenter lanDhcpClientConfTable globalBorder" group="dhcpc">
+				<thead>
+					<tr align="center" group="dhcpc">
+						<th colspan="2">
+							<span id="__ML_lan_dhcp_setup_client_configuration"></span>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr group="dhcpc">
+						<td><span id="__ML_lan_ip_dhcp_client_ip_address">IP Adresi</span></td>
+						<td><span id="__V_dhcpc_vlan_ip"></span></td>
+					</tr>
+					<tr group="dhcpc">
+						<td><span id="__ML_lan_ip_dhcp_client_netmask">Ağ Maskesi</span></td>
+						<td><span id="__V_dhcpc_vlan_netmask"></span></td>
+					</tr>
+				</tbody>
+			</table>
+			<table id="static_0_ip_address" class="marginCenter lanDhcpClientConfTable globalBorder" group="static">
+				<thead>
+					<tr group="static">
+						<th colspan="2">
+							<span id="__ML_lan_ip_dhcp_settings_local_ip_configuration"></span>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr group="static">
+						<td><span id="__ML_lan_ip_dhcp_settings_ip_address"></span></td>
+						<td><a href="javascript:redirectEditPage('lan-0')"><span id="__V_static_0_ip" group="static"></span></a></td>
+					</tr>
+					<tr group="static">
+						<td><span id="__ML_lan_ip_dhcp_settings_netmask"></span></td>
+						<td><a href="javascript:redirectEditPage('lan-0')"><span id="__V_static_0_netmask" group="static"></span></a></td>
+					</tr>
+				</tbody>
+			</table>
+			<div id="dhcp_server_div"></div>
+			<div class="footer" style="display: none;">
+				<input type="button" name="" value="Save" id="__ML_save" onclick="ClickSave()" />
+				<input type="button" name="" value="Cancel" id="__ML_cancel" onclick="ClickCancel()" />
+			</div>
+		</div>
+	</body>
+</html>

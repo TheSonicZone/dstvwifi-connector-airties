@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+<html>
+	<head>
+		<title>Airties</title>
+		<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE"/>
+		<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE"/>
+		<META HTTP-EQUIV="EXPIRES" CONTENT="-1"/>
+		<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8"/>
+		
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript">
+			document.title = "AirTies " + __DEF_BuildProfile;
+			if (top.frames.length!=0)
+			top.location=self.document.location;
+		</script>
+
+		<script language="JavaScript" type="text/JavaScript">
+			document.title = "AirTies " + __DEF_BuildProfile;
+			function MM_reloadPage(init) {  //reloads the window if Nav4 resized
+			if (init==true) with (navigator) {if ((appName=="Netscape")&&(parseInt(appVersion)==4)) {
+			document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}
+			else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();
+			}
+			MM_reloadPage(true);
+		</script>
+	</head>
+
+	<frameset rows="115,*" frameborder="NO" border="0" framespacing="0">
+		<frame src="/top.html" name="topFrame" scrolling="NO" noresize/>
+		<frame src="maxuser_main.html" name="mainFrame"/>
+	</frameset>
+	<noframes>
+		<body>
+		</body>
+	</noframes>
+</html>

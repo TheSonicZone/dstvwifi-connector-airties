@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+	<head>
+		<title></title>
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+		<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+		<link href="/style/style_wireless.css" rel="stylesheet" type="text/css" />
+		
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		
+		<script type="text/javascript" src="/js/validation/regula.js"></script>
+		<script type="text/javascript" src="/js/validation/jquery.regula.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+
+		<script type="text/javascript" src="/global/global_view.js"></script>
+		<script type="text/javascript" src="/global/global_model.js"></script>
+		<script type="text/javascript" src="/global/global_controller.js"></script>
+		<script type="text/javascript" src="/global/global.js"></script>
+
+		<script type="text/javascript" src="../classes/wireless_core.js"></script>
+		<script type="text/javascript" src="../classes/wireless_ng.js"></script>
+		<script type="text/javascript" src="../classes/wireless_core_ap.js"></script>
+		<script type="text/javascript" src="../classes/wireless_ng_ap.js"></script>
+		<script type="text/javascript" src="../classes/wireless_wds.js"></script>
+		<script type="text/javascript" src="/lan/classes/dhcps.js"></script>
+
+		<script type="text/javascript" src="../global/global_wireless.js"></script>
+		<script type="text/javascript" src="status_new_model.js"></script>
+		<script type="text/javascript" src="status_new_view.js"></script>
+		<script type="text/javascript" src="status_new_controller.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+
+		<script type="text/javascript">
+
+			$(document).ready(function()
+			{
+				page.documentReady();
+			});
+
+			var page = {
+				controller: wirelessStatusController,
+				documentReady: function()
+				{
+					globalView.documentReady();
+					page.controller.documentReady();
+				}
+			};
+
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

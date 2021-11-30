@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <title>Login</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Cache-control" content="NO-CACHE" />
+    <meta http-equiv="PRAGMA" content="NO-CACHE" />
+    <meta http-equiv="EXPIRES" content="-1" />
+	<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+	<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+	<!--[if lt IE 8]>
+	  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+	<![endif]-->
+    <link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+	<link href="/style/style_login.css" rel="stylesheet" type="text/css" />
+	
+	<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+	<script type="text/javascript" src="/js/jquery.js"></script>
+	<script type="text/javascript" src="/js/jquery-ui.js"></script>
+    
+    <script type="text/javascript" src="/global/global_view.js"></script>
+    
+    <script type="text/javascript" src="/js/Definitions.js"></script>
+    <script type="text/javascript" src="/js/ui.js"></script>
+    <script type="text/javascript" language="javascript">
+
+	    parseURI();
+	
+	    if (GETDATA["user"] != undefined)
+	    {
+	        Username = GETDATA["user"];
+	    }
+	    else
+	    {
+	        Username = "undefined";
+	    }
+	
+	    if (GETDATA["pass"] != undefined)
+	    {
+	        Password = GETDATA["pass"];
+	    }
+	    else
+	    {
+	        Password = "undefined";
+	    }
+	
+	    var ErrorCode = ""
+	    if(GETDATA["ErrorCode"] != undefined)
+	    {
+		    ErrorCode = GETDATA["ErrorCode"] ;
+	    }
+	
+	    function ShowHideUsername()
+	    {
+	        if(getDef("__DEF_ShowUsernameInLoginPage") != 1) $("#UsernameCell").hide();
+	        else document.getElementById("uiPostGetPage").value="";
+	    }
+	
+	    function send_lang_query(lang) {
+	        beginXML();
+	        addCommand("cfgmgr-0", "begin_transaction", "webui-0");
+	        addSet("webui-0", "language", lang);
+	        addCommand("cfgmgr-0", "commit", "webui-0");
+	        addCommand("cfgmgr-0", "end_transaction", "webui-0");
+	        addCommand("cfgmgr-0", "save", "");
+	        addCommand("webui-0","apply_lang","");
+	        endXML();
+	        var fn = parse_lang_response;
+	        sendAJAX(fn);
+	    }
+	
+		function parse_lang_response() 
+		{
+		    for (var i=0;i<top.frames.length;i++) 
+		    {
+		        top.frames[i].location.reload();
+		    }
+		}
+		
+		function SelectLang(lang)
+		{
+		
+		    send_lang_query(lang);
+		}
+		
+		$(document).ready(function()
+		{
+			parseURI();
+			if (GETDATA["redirect"] != undefined)
+			{
+			document.getElementById("redirect").value = GETDATA["redirect"];
+			}
+			if (GETDATA["self"] != undefined)
+			{
+			document.getElementById("self").value = GETDATA["self"];
+			}
+			ShowHideUsername();
+			if(Password != "undefined" && Username != "undefined")
+			{
+				document.getElementById("uiPostGetPage").value = Username;
+				document.getElementById("uiPostPassword").value = Password;
+				DeleteAllCookie();
+				document.formlogin.submit();
+			}
+			
+			if(__DEF_ShowUsernameInLoginPage == 1)
+			{
+				if(ErrorCode == 6) $("#userNamePasswordError").show();
+			}
+			else
+			{
+				if(ErrorCode == 6) $("#passwordError").show();
+			}
+		 
+		 	globalView.addButtonClass();
+			showPage();
+			if(__DEF_ShowUsernameInLoginPage == 1)
+			{
+				$("#uiPostGetPage").focus();
+			}
+			else
+			{
+				$("#uiPostPassword").focus();
+			}
+		});
+		
+		function uiDologin()
+		{
+		    DeleteAllCookie();
+		}
+
+	</script>
+</head>
+
+
+
+<body>
+	<div id="waitDiv" class="center">
+		<p>
+			<script language="javascript">document.write(__ML_please_wait);</script>
+		</p>
+		<img src="/images/ajax-loader.gif"/>
+	</div>
+
+	<div id="contentDiv" style="display:none;" class="simpleBackground">
+	
+	<div class="divLogin">
+		<div id="userNamePasswordError" class="globalHeaderInfoDiv marginCenter textCenter error" style="display: none"><span id="__ML_user_name_password_login_error" ></span></div>
+		<div id="passwordError" class="globalHeaderInfoDiv marginCenter textCenter error" style="display: none"><span id="__ML_password_login_error" ></span></div>
+	
+	    <form method="POST" name="formlogin" action="cgi-bin/login" target="_top" id="uiPostForm">
+	        <input type="hidden" id="redirect" name="redirect"/>
+	        <input type="hidden" id="self" name="self"/>
+	        <table class="loginForm marginCenter widthAuto globalBorder">
+				<tr>
+					<td colspan="2" class="textCenter" height="40" style="border-bottom:1px solid #CCCCCC;">
+						<span id="__ML_login"></span>
+					</td>
+				</tr>
+	          	<tr id="UsernameCell">
+			  		<td height="40" style="border-bottom: 1px solid #CCC">
+			  			<span id="__ML_login_username"></span>
+			  		</td>
+			  		<td height="40" style="border-bottom: 1px solid #CCC">
+	                	<input name="user" type="text" id="uiPostGetPage" value="admin" size="" />
+	            	</td>
+	          	</tr>
+				<tr>
+					<td height="40" style="border-bottom: 1px solid #CCC" align="right">
+				    	<span style="" id="__ML_login_password"></span>
+				 	</td>
+				 	<td height="40" style="border-bottom: 1px solid #CCC">
+				    	<input name="password" type="password" id="uiPostPassword" maxlength="32" />
+					</td>
+				</tr>
+		        <tr>
+		            <td height="40" colspan="2">
+		              <div class="marginCenter textCenter">
+		                <span style="margin-top:5px;">
+		                  <input onclick="uiDologin();" name="gonder"  type="submit" id="__ML_ok" value="Tamam" class="loginButton" />
+		                </span>
+		              </div>
+		            </td>
+		        </tr>
+	        </table>
+	    </form>
+	</div>
+
+	<p class="copyright textCenter">
+	  <span id="__ML_login_solubility" style="margin-top:15px; display:none;">Minimum 1024x768 çözünürlükte  Internet Explorer 5.5+ veya Firefox 1.0.6+ kullanmanızı tavsiye ederiz. </span><br/><br/>
+	  <span id="__ML_login_Copyright"  style="margin-top:15px;">Copyright © 2005 AirTies Wireless Networks. Bütün hakları saklıdır. </span>
+	</p>
+</div>
+</body>
+</html>

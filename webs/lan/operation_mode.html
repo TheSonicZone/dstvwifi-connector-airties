@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title></title>
+		<link href="../air.css" rel="stylesheet" type="text/css" />
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/dlib.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		
+		<script type="text/javascript">
+		var obj;
+		
+		var selectedOptMode = null;
+		var currentOptMode = null;
+		var requiresReboot = false;
+		
+		function StartQuery()
+		{
+			obj = new uiObject();
+			obj.addGet({module: "product", key: "router_mode"});
+					
+			obj.query();
+			
+			obj.addField({table: "operationMode", module: "product", field: "router_mode"});
+		
+			ResumeCreatePage();
+		}
+		
+		function ResumeCreatePage()
+		{
+			SetOperationMode();
+			showPage();
+		}
+		
+		$(document).ready(function()
+		{
+			StartQuery();
+		});
+		
+		function SetOperationMode()
+		{
+			currentOptMode = obj.tables['operationMode'][0]['product']['router_mode'].value;
+			if(currentOptMode && currentOptMode != "")
+			{
+				$('input[value='+ currentOptMode +']', '#form_operation_mode').attr('checked', true);
+			}
+		}
+		
+		function ReloadPage()
+		{
+			if(requiresReboot)
+			{
+				status_modem = "fact_modem";
+				top.location.href="../tools/wait_reboot.html?status_modem="+status_modem+"&redirectIp="+getDef("__DEF_DefaultIpAddress");
+			}
+			else
+			{
+				window.location.href="/lan/operation_mode.html";
+			}
+			
+		}
+
+		function Cancel()
+		{
+			ReloadPage();
+		}
+		
+		function ValidatePage()
+		{
+			var returnValue = false;
+			selectedOptMode = $('input[name=operation_mode]:checked', '#form_operation_mode').val();
+			if (typeof selectedOptMode != "undefined" && selectedOptMode != currentOptMode)
+			{
+				if(selectedOptMode == "ap")
+				{
+					returnValue = confirm(__ML_lan_operation_mode_ap_mode_warning);
+				}
+				else if(selectedOptMode == "router")
+				{
+					returnValue = confirm(__ML_lan_operation_mode_router_mode_warning);
+				}
+				
+				if(returnValue == true)
+				{
+					returnValue = confirm(__ML_factory_defaults_confirm_message);
+				}
+				
+				if(returnValue == false) 
+				{
+					$('input[value='+ currentOptMode +']', '#form_operation_mode').attr('checked', true);
+				}
+			}
+
+			return returnValue;
+		}
+		
+		function Save()
+		{
+			requiresReboot = true;
+			
+			disablePage();
+			beginXML();
+			addCommand("cfgmgr-0", "begin_transaction", "product-0");
+			
+			addSet("product-0", "router_mode", selectedOptMode);
+			
+			addCommand("cfgmgr-0", "commit", "product-0");
+			addCommand("cfgmgr-0", "end_transaction", "product-0");
+			addCommand("product-0", "apply", "");
+			addCommand("cfgmgr-0", "save","");
+			endXML();
+			var fn = ReloadPage;
+			sendAJAX(fn);
+		}
+		</script>
+	</head>
+	<body>
+		<div align="center" id="waitDiv" >
+			<br/><br/><br/><br/><p><script language="javascript">document.write(__ML_please_wait);</script></p><img src="/images/ajax-loader.gif"/>
+		</div>
+	  	<div style="display: none; background-color: #f0f0f0; width:100%; text-align: center; padding-bottom:10px" id="contentDiv">
+			<div style="width: 100%; text-align: center; padding:5px;" class="table_style_ana_th">
+					<span id="__ML_lan_operation_mode" ></span>
+			</div>
+			<div id="div_choose_operation_mode" style="margin:5px;">
+				<span id="__ML_lan_operation_mode_description" style="padding:5px"></span>
+				<form id="form_operation_mode">
+					<table style="width: 50%; margin:auto;">
+						<tr>
+							<td style="width: 50%;">
+								<input type="radio" id="__V_lan_operation_mode_router" name="operation_mode" value="router" onclick="if(ValidatePage()) {Save(); }" /><span id="__ML_lan_operation_mode_router_mode"></span>
+							</td>
+							<td style="width: 50%;">
+								<input type="radio" id="__V_lan_operation_mode_ap" name="operation_mode" value="ap" onclick="if(ValidatePage()) {Save(); }" /><span id="__ML_lan_operation_mode_access_point"></span>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align:left; vertical-align:top; padding:5px;">
+								<span id="__ML_lan_operation_mode_router_description"></span>
+							</td>
+							<td style="text-align:left; vertical-align:top; padding:5px;">
+								<span id="__ML_lan_operation_mode_ap_description"></span>
+							</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<!-- 
+			<input id="__ML_save" type="button" class="inputButton" onclick="if(ValidatePage()) {Save(); }" />
+			<input id="__ML_cancel" type="button" class="inputButton" onclick="Cancel();" />
+			 -->
+		</div>
+	</body>
+</html>

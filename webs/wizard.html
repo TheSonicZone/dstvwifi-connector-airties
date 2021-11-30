@@ -1,0 +1,1753 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="EXPIRES" content="-1" />
+		<meta http-equiv="Content-Type" content="text/html; CHARSET=UTF-8" />
+		
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+		
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+		<link rel="stylesheet" type="text/css" href="/style/style_wizard.css" />
+
+		<script type="text/javascript" src="wizard_model.js"></script>
+		
+		<script type="text/javascript" src="/global/global.js"></script>
+		<script type="text/javascript" src="/global/global_model.js"></script>
+		<script type="text/javascript" src="/global/global_view.js"></script>
+		
+		<script type="text/javascript" src="/js/dlib.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/OptionalFeatures.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript" src="/js/ppp_username3.js"></script>
+		<script language="javascript" type="text/javascript">
+
+		var instances = [];
+		
+		var quickSetupController =
+		{
+			activeManagerIndex: 0,
+			activeManagerIndex1: 0,
+
+			documentReady: function()
+			{
+				quickSetupController.sendFirstQuery();
+			},
+			
+			eventHandler: function(args)
+			{
+				switch(args.id)
+				{
+					case "quickSetupController.firstQueryFinished":
+						quickSetupController.sendSecondQuery();
+						break;
+
+					case "quickSetupController.secondQueryFinished":
+						quickSetupController.sendThirdQuery();
+						break;
+					case "quickSetupController.thirdQueryFinished":
+						quickSetupController.sendFourthQuery();
+						break;
+					case "quickSetupController.fourthQueryFinished":
+						quickSetupController.allQueriesFinished();
+						break;
+					case "saved":
+						quickSetupController.documentReady();
+						break;
+				}
+			},
+
+			sendFirstQuery: function()
+			{
+				quickSetupModel.sendInstListQuery();
+				globalModel.addEvent({eventHandler: "quickSetupController", id: "quickSetupController.firstQueryFinished"});
+				globalModel.sendAjax();
+			},
+
+			sendSecondQuery: function()
+			{
+				quickSetupModel.sendCapabilitiesQuery();
+				globalModel.addEvent({eventHandler: "quickSetupController", id: "quickSetupController.secondQueryFinished"});
+				globalModel.sendAjax();
+			},
+
+			sendThirdQuery: function()
+			{
+				quickSetupModel.sendAPListQuery();
+				globalModel.addEvent({eventHandler: "quickSetupController", id: "quickSetupController.thirdQueryFinished"});
+				globalModel.sendAjax();
+			},
+			
+			sendFourthQuery: function()
+			{
+				quickSetupModel.sendAirTouchQuery();
+				quickSetupModel.sendSsidQuery();
+				quickSetupModel.sendFreqQuery();
+				quickSetupModel.sendSecurityValuesQuery();
+				quickSetupModel.sendOpModeQuery();
+				globalModel.addEvent({eventHandler: "quickSetupController", id: "quickSetupController.fourthQueryFinished"});
+				globalModel.sendAjax();
+			},
+
+			createTabControls: function(activeManagerIndex)
+			{
+				var $tabs = $('#tabs').tabs();
+
+				$tabs.tabs({ selected: activeManagerIndex });
+				
+		        $(".ui-tabs-panel").each(function(i){
+					
+					var next = i+1;
+		            var totalSize = $(".ui-tabs-panel").size() - 1;
+
+		            if (i != totalSize) {
+		            	if(getDef("__DEF_HideInternetMenu") != "0") next = i + 2;
+		                $(this).append("<a href='#' class='next-tab mover' rel='" + next + "'>"+getML("__ML_next")+" &#187;</a>");
+		            }
+		            else {
+		            	if(i == 0 && obj.tables['currentOpMode'][0]['wireless_core']['op_mode'].value == "ap")
+		            	 $(this).append("<a href='#' class='save-tab mover' rel='" + next + "'>"+getML("__ML_save")+"</a>");
+		            }
+
+		            if (i != 0) {
+		            	if(getDef("__DEF_HideInternetMenu") != "0") prev = i; else prev = i-1;
+		                $(this).append("<a href='#' class='prev-tab mover' rel='" + prev + "'>&#171; "+getML("__ML_back")+"</a>");
+		            }
+
+		        });
+
+		        $tabs.tabs({
+		            select: function(event, ui) {
+						if(ValidatePage()) 
+						{
+							quickSetupController.activeManagerIndex = ui.index;
+						}
+						else
+						{
+							return false;
+						}
+		            }
+		        });
+
+		        
+				$('.next-tab, .prev-tab').click(function() {
+		             $tabs.tabs('select', $(this).attr("rel"));
+		             return false;
+		        });
+
+				$('.save-tab').click(function() {
+					var returnValue = true;
+					if(quickSetupModel.instances.length > 0)
+					{
+						if(!validateWirelessNg(($(this).attr("rel") - 2))) returnValue = false;
+					}
+					else
+					{
+						if(!ValidatePage()) returnValue = false;
+					}
+					
+					if(returnValue) Save();
+					else return returnValue;
+		        });
+			},
+			
+			allQueriesFinished: function()
+			{
+				instances = [];
+				instances.push("wireless_core-0");
+				
+				for(var i=0; i<quickSetupModel.instances.length; i++)
+				{
+					instances.push(quickSetupModel.instances[i]);
+					quickSetupModel.instances[i].configSettings.airTouchChanged = quickSetupModel.instances[i].configSettings.airTouch;
+				}
+
+				if(getDef("__DEF_HideADSLMenu") == "0" || getDef("__DEF_HideInternetMenu") == "0")
+					quickSetupController.activeManagerIndex = -1;
+				else
+					quickSetupController.activeManagerIndex = 0;
+				
+				startQuery();
+			
+				if(ppp_username.get_value() == "") ppp_username.set_value(getML(getDef("__DEF_DefaultUsernameText")));
+				
+				quickSetupController.createTabControls(quickSetupController.activeManagerIndex);
+					
+				globalView.addButtonClass();
+				globalView.addRowClass();
+			},
+
+			save: function()
+			{
+				for(var i=0; i<quickSetupModel.instances.length; i++)
+				{
+					var freqValue = $("#freq_"+i).val();
+					var ssidValue = $("#ssid_"+i).val();
+					var secModeValue = $("#security_"+i).val();
+					var passwordValue = $("#wireless_password_"+i).val();
+					
+					var selectedFreq = quickSetupModel.instances[i].freqs[freqValue];
+					var selectedMode = selectedFreq.modes[selectedFreq.defaultMode];
+
+					if(freqValue != quickSetupModel.instances[i].configSettings.freq)
+					{
+						quickSetupModel.instances[i].saveChanbw(selectedMode.defaultChannelBw);
+						quickSetupModel.instances[i].saveChannel(selectedFreq.defaultChannel);
+						quickSetupModel.instances[i].saveFreq(freqValue);
+						quickSetupModel.instances[i].saveMode(selectedFreq.defaultMode);			
+					}
+					
+					quickSetupModel.instances[i].aps[0].setSsid(ssidValue);
+					quickSetupModel.instances[i].aps[0].setSecMode(secModeValue);
+
+					switch($("#security_"+i).val())
+					{
+						case "off":
+							
+							break;
+						case "wep":
+							quickSetupModel.instances[i].aps[0].setWepKey1(passwordValue);
+							break;
+						case "wpa":
+							quickSetupModel.instances[i].saveAirTouch(quickSetupModel.instances[index].configSettings.airTouchChanged);
+							break;
+						case "wpa2":
+						case "wpa_both":
+							if(quickSetupModel.instances[i].aps[0].wpa_auth_type == "1")
+							{
+								quickSetupModel.instances[i].aps[0].setWpaRadiusKey(passwordValue);
+							}
+							else
+							{
+								quickSetupModel.instances[i].aps[0].setWpaPassword(passwordValue);
+							}
+							
+							break;
+					}
+
+					if(__DEF_WirelessWpsSupport == "1")
+					{
+						quickSetupModel.instances[i].setWpsConfigUuidUpdate("");
+						quickSetupModel.instances[i].setWpsRole("registrar");
+					}
+				}
+
+				for(var i = 0; i < quickSetupModel.instances.length; i++)
+				{
+					quickSetupModel.instances[i].sendApply();
+				}
+				
+				globalModel.addEvent({eventHandler: "quickSetupController", id: "saved"});
+				globalModel.sendAjax();
+			}
+		};
+			
+			var usernameStandartControl = "UsernameStandart";
+			var usernameCurrentControl = usernameStandartControl;
+			var usernameControl = usernameStandartControl;
+			var displaySteps = [];
+			var saveADSLSettings = false;
+			var saveWifiSettings = false;
+			var stayPage = 1;
+			var isDefault = false;
+			var statusOfAirtouch = "";
+			var statusOfAirtouchChanged = "";
+			var txmode = "";
+
+			var currentUsername = "";
+			var currentPassword = "";
+
+			var RegexPattern = "";
+			var RegexFormat = "";
+			var wpa_regex_id = "wpa";
+			var wpa_regex_max_len = "64";
+
+			var ppp_username=new ppp_username_object("ppp_username", "UsernameCell", getDef("__DEF_UsernameEditTypeInADSLSettings"));
+			ppp_username.set_ttnet_username_desc_row("TtnetUsernameDescRow");
+			var queryGenerator = new Array();
+			var obj = new Object(); obj.Dest = ppp_username.get_id(); obj.ObjType= "TextBoxObj";
+			obj.PageValBehaviour = ppp_username.get_page_val_behaviour();
+			obj.Defaults = null; obj.RelatedName = __ML_username;
+			obj.RegexPattern = ppp_username.get_regex_pattern();
+			obj.RegexFormat = ppp_username.get_regex_format();
+			obj.VisibleGroup =["pppoe","pppoa"]; obj.VisibiltyDepth = 2;
+			queryGenerator.push(obj);
+
+			if(__DEF_UsernameEditTypeInADSLSettings=="twain")
+			{
+				RegexPattern = "^[a-zA-Z0-9_.]+$" ;
+				RegexFormat = "'aIrTiEs','AIRTIES','airties','AIRTIES123','airties123','AIRTIES.123','airties.123'";
+			}
+			else if(__DEF_UsernameEditTypeInADSLSettings=="standart")
+			{
+				RegexPattern = "^([a-zA-Z0-9_\.\-])+\@([a-zA-Z0-9\-])+(\.+([a-zA-Z0-9]{1,255}))*$" ;
+				RegexFormat = eval(__DEF_DefaultUsernameRegexDescription);
+			}
+			var regexContainer = {"0": {"pattern": "^(([0-9A-Fa-f]{10})|)$", "format" : "[0-9 a-f] (10 " + __ML_characters + ")"}, "1" : {"pattern" : "^(([\\s\\S]{5})|)$", "format"  : __ML_any_character + "(5 " + __ML_characters + ")"}, "2" : {"pattern" : "^(([0-9A-Fa-f]{26})|)$", "format"  : "[0-9 a-f] (26 " + __ML_characters + ")"}, "3": {"pattern" : "^(([\\s\\S]{13})|)$", "format"  : __ML_any_character + "(13 " + __ML_characters + ")"}, "4": {"pattern" : "^(([0-9A-Za-z]{58})|)$", "format"  : "[0-9 a-f] (58 " + __ML_characters + ")"}, "5" : {"pattern" : "^(([0-9A-Fa-f]{24})|)$", "format"  : "[0-9 a-z] (24 " + __ML_characters + ")"}, "wep_all": {"pattern" : "[\\s\\S]", "format" : __ML_characters}, "ppp_username": {"pattern" : RegexPattern, "format" : RegexFormat}, "modem_password": {"pattern" : "^([0-9a-zA-Z])+$", "format" : "(A-Z a-z 0-9)" + __ML_characters}, "ppp_password": {"pattern" : "^[^ÇçŞşİıÖöÜüĞğ]+$", "format" : "[a-z],[A-Z],[0-9],_, ,-,@,#" + __ML_characters}, "wpa"  : {"pattern" : "^(((?!\x20)[\x20-\x7f]{7,62}[\x21-\x7f])|([a-fA-F0-9]{8,64}))$", "format"  : "(abc.1234)8-63 " + __ML_characters}, "wpa_secret"  : {"pattern" : "^(?!\x20)[\x20-\x7f]{7,63}[\x21-\x7f]$", "format"  : "(abc.1234)8-64 " + __ML_characters}};
+
+			var obj;
+
+			function startQuery()
+			{
+				obj = new uiObject();
+				obj.addGet({module: "wan", key: "enabled"});
+				if(getDef("__DEF_HideADSLMenu") == "0" || getDef("__DEF_HideInternetMenu") == "0")
+				{
+					obj.addGet({module: "wan", key: "linktype"});
+					obj.addGet({module: "wan", key: "type"});
+					obj.addGet({module: "wan", key: "entities"});
+					obj.addQuery({module: "wan", key: "isconnected"});
+					obj.addQuery({module: "wan", key: "localip"});
+					obj.addGet({module: "pppox", key: "settings"});
+					obj.addQuery({module: "dsl", key: "status"});
+				}
+
+				if(__DEF_HideWirelessMenu != 1)
+				{
+					obj.addGet({module: "wireless_ap", key: "sec_mode"});
+					obj.addGet({module: "wireless_ap", key: "wep_key1"});
+					obj.addGet({module: "wireless_ap", key: "wpa_password"});
+					obj.addGet({module: "wireless_ap", key: "wpa_radius_key"});
+					obj.addGet({module: "wireless_ap", key: "wep_key_type"});
+					obj.addGet({module: "wireless_ap", key: "ssid"});
+					obj.addGet({module: "wireless_ap", key: "wpa_auth_type"});
+					obj.addGet({module: "wireless_wds", key: "enabled"});
+					obj.addGet({module: "wireless_wds", key: "mac"});
+				}
+
+				obj.addQuery({module: "cfgmgr", key: "isdefault"});
+				obj.addQuery({module: "sysmgr", key: "fwversion"});
+				obj.addGet({module: "wireless_core", key: "wps_enabled"});
+				obj.addGet({module: "wireless_core", key: "txmode"});
+				obj.addGet({module: "wireless_core", key: "freq"});
+				obj.addQuery({module: "wireless_core", key: "freqs"});
+				obj.addQuery({module: "wireless_core", key: "securitymodes"});
+
+				obj.addQuery({module: "wireless_core", key: "op_mode"});
+				
+				obj.query();
+
+				obj.addField({table: "currentOpMode", module: "wireless_core", field: "op_mode"});
+
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.freq", fieldAlias: "freq", sCounter : 1});
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.freqValue", fieldAlias: "freqValue", sCounter : 1});
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.channels", fieldAlias: "channels", sCounter : 1});
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.modes", fieldAlias: "modes", sCounter: 1});
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.modeValues", fieldAlias: "modeValues", sCounter : 1});
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.defaultChannel", fieldAlias: "defaultChannel", sCounter : 1});
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.defaultChanbw", fieldAlias: "defaultChanbw", sCounter : 1});
+				obj.addField({table: "freqsList", module: "wireless_core", field: "freq@counter@.defaultMode", fieldAlias: "defaultMode", sCounter : 1});
+				
+				addManagerTabs();
+				
+				if(getDef("__DEF_HideADSLMenu") == "1" && getDef("__DEF_HideInternetMenu") == "1")
+				{
+					$("#tr_connection_information").hide();
+					$("#tr_internet_connection").hide();
+					$("#tr_adsl_connection").hide();
+					$("#tr_internet_ip").hide();
+				}
+				if(getDef("__DEF_ADSLDisabled") == "1")
+				{
+					$("#tr_adsl_connection").hide();
+				}
+			
+				if(getDef("__DEF_quicksetup_hide_internet_ip_address") == "1") $("#tr_internet_ip").hide();
+				if(getDef("__DEF_quicksetup_hide_firmware_version") == "1") $("#tr_firmware_version").hide();
+
+				var totalEnabledWanInsts = 0;
+				var wanInst = "";
+
+				obj.addField({table: "validation", module: "wireless_core", field: "securitymode@counter@.freq", fieldAlias: "freq", sCounter: 1});
+				obj.addField({table: "validation", module: "wireless_core", field: "securitymode@counter@.mode", fieldAlias: "mode", sCounter: 1});
+				obj.addField({table: "validation", module: "wireless_core", field: "securitymode@counter@.security", fieldAlias: "security", sCounter: 1});
+
+				obj.addField({table: "wanList", module: "wan", field: "enabled"});
+				for(var i = 0; i < obj.tables['wanList'].length; i++)
+				{
+					if(getDef("__DEF_HideADSLMenu") == "0" || getDef("__DEF_HideInternetMenu") == "0")
+					if(obj.tables['wanList'][i]['wan']['enabled'].value == 1 && wanInst == "")
+					{
+						wanInst = obj.tables['wanList'][i]['wan']['enabled'].inst;
+						totalEnabledWanInsts++;
+					}
+				}
+
+				if(getDef("__DEF_HideADSLMenu") == "0" || getDef("__DEF_HideInternetMenu") == "0")
+				{
+					if(getDef("__DEF_ADSLDisabled") != "1")
+					{
+						displaySteps.push("dsl");
+					}
+					if(totalEnabledWanInsts == 1)
+					{
+						obj.addField({table: "wanList", module: "wan", field: "linktype"});
+						obj.addField({table: "wanList", module: "wan", field: "type"});
+						obj.addField({table: "wanList", module: "wan", field: "isconnected"});
+						obj.addField({table: "wanList", module: "wan", field: "localip"});
+						obj.addField({table: "wanList", module: "wan", field: "entities.pppox"});
+						obj.addFilter({table: "wanList", module: "wan", field: "enabled", property: "inst", compareValue: wanInst});
+
+						var linktype = obj.tables['wanList'][0]['wan']['linktype'].value == "" ? obj.tables['wanList'][0]['wan']['type'].value : obj.tables['wanList'][0]['wan']['linktype'].value;
+
+						if(linktype.toLowerCase().indexOf("ppp") != -1)
+						{
+							addInternetTab(-1);
+
+							if(getDef("__DEF_quicksetup_hide_protocole") == "1") $("#tr_internet_protocole").hide();
+
+							$("#dsl-active").show();
+							obj.addField({table: "wanList", module: "pppox", field: "settings.type"});
+							obj.addField({table: "wanList", module: "pppox", field: "settings.username"});
+							obj.addField({table: "wanList", module: "pppox", field: "settings.password"});
+							obj.addFilter({table: "wanList", module: "wan", field: "entities.pppox", compareModule: "pppox", compareField: "settings.username", compareProperty: "inst"});
+							saveADSLSettings = true;
+
+							ppp_username.set_value(obj.tables["wanList"][0]["pppox"]["settings.username"].value || "");
+							currentUsername = obj.tables['wanList'][0]['pppox']['settings.username'].value;
+							$("#password").val(obj.tables['wanList'][0]['pppox']['settings.password'].value);
+							currentPassword = obj.tables['wanList'][0]['pppox']['settings.password'].value;
+							$("#protocol").val(obj.tables['wanList'][0]['pppox']['settings.type'].value);
+
+							if(__DEF_UsernameEditTypeInADSLSettings == "twain") {ChangeUsernameFormat();}
+						}
+						else
+						{
+							$("#dsl-not-active").show();
+							if(__DEF_HideWirelessMenu == 1) $("#tabs").hide();
+							saveADSLSettings = false;
+						}
+						
+						if(linktype.toLowerCase().indexOf("pppoe") != -1)
+						{
+							$("#__V_adsl_connection_type").text("PPPoE");
+						}
+						else
+						{
+							$("#__V_adsl_connection_type").text("PPPoA");
+						}
+
+						if (obj.tables['wanList'][0]['wan']['isconnected'].value == 1)
+						{
+							$("#__V_internet_connection").text(getML("__ML_connected"));
+							$("#__V_internet_ip").text(obj.tables['wanList'][0]['wan']['localip'].value);
+						}
+						else
+						{
+							$("#__V_internet_connection").text(getML("__ML_disconnected"));
+							$("#__V_internet_ip").text("-");
+						}
+						
+					}
+					if(getDef("__DEF_ADSLDisabled") != "1")
+					{
+						obj.addField({table: "wizardObj", module: "dsl", field: "status.training_stat"});
+						obj.addFilter({table: "wizardObj", module: "dsl", field: "status.training_stat", property: "inst", compareType: "equal", compareValue: "dsl-0"});
+						if (obj.tables['wizardObj'][0]['dsl']['status.training_stat'].value == "Showtime")
+						{
+							$("#__V_adsl_connection").text(getML("__ML_connected"));
+						}
+						else
+						{
+							$("#__V_adsl_connection").text(getML("__ML_disconnected"));
+						}
+					}
+				}
+				else
+				{
+					$("#__V_internet_connection").text(getML("__ML_disconnected"));
+					$("#__V_adsl_connection").text(getML("__ML_disconnected"));
+					$("#__V_internet_ip").text("-");
+				}
+
+				if(__DEF_HideWirelessMenu != 1)
+				{
+					for(var i = 0; i < instances.length; i++)
+					{
+						if(i==0) addCoreTab(i);
+						else addNgTab(i);
+					}
+
+					getCurrentOperatingMode();
+				}
+
+				if(obj.tables['freqsList'][0])
+				{
+
+					var optionList = "";
+					for(var i = 0; i < obj.tables['freqsList'].length; i++)
+					{
+						var optionTemplate = "<option value='@freq_value@' default_mode='@default_mode@' default_channel='@default_channel@' default_bandwidth='@default_bandwidth@'>@freq@</option>";
+						optionTemplate = optionTemplate.replace("@freq_value@", obj.tables['freqsList'][i]['wireless_core']['freq'].value);
+						optionTemplate = optionTemplate.replace("@freq@", obj.tables['freqsList'][i]['wireless_core']['freqValue'].value);
+
+						var modeValues = obj.tables['freqsList'][i]['wireless_core']['modeValues'].value.split("|");
+						var defaultChanbws = obj.tables['freqsList'][i]['wireless_core']['defaultChanbw'].value.split("|");
+						for(var j = 0; j < modeValues.length; j++)
+						{
+							if(modeValues[j] == obj.tables['freqsList'][i]['wireless_core']['defaultMode'].value)
+							{
+								optionTemplate = optionTemplate.replace("@default_bandwidth@", defaultChanbws[j]);
+							}
+						}
+						optionTemplate = optionTemplate.replace("@default_channel@", obj.tables['freqsList'][i]['wireless_core']['defaultChannel'].value);
+						optionTemplate = optionTemplate.replace("@default_mode@", obj.tables['freqsList'][i]['wireless_core']['defaultMode'].value);
+						optionList += optionTemplate;
+					}
+
+					$("#freq").html(optionList);
+					if(obj.tables['freqsList'].length == 1)
+					{
+						$("#freq").after('<span id="freqValue">'+obj.tables['freqsList'][0]['wireless_core']['freqValue'].value+'</span>');
+						$("#freq").hide();
+					}
+				}
+
+
+
+				obj.addField({table: "wirelessCoreObj", module: "wireless_core", field: "wps_enabled"});
+				obj.addField({table: "wirelessCoreObj", module: "wireless_core", field: "txmode"});
+				obj.addField({table: "wirelessCoreObj", module: "wireless_core", field: "freq"});
+				if(obj.tables['wirelessCoreObj'][0])
+				{
+					statusOfAirtouch = obj.tables['wirelessCoreObj'][0]['wireless_core']['wps_enabled'].value;
+					statusOfAirtouchChanged = statusOfAirtouch;
+					txmode = obj.tables['wirelessCoreObj'][0]['wireless_core']['txmode'].value;
+
+					if($("#freq").attr("id") != undefined) setValues("freq", "SelectObjSelecting", obj.tables['wirelessCoreObj'][0]['wireless_core']['freq'].value);
+				}
+
+				if(__DEF_HideWirelessMenu != 1)
+				{
+					obj.addField({table: "wirelessAp", module: "wireless_ap", field: "sec_mode"});
+					obj.addField({table: "wirelessAp", module: "wireless_ap", field: "wep_key1"});
+					obj.addField({table: "wirelessAp", module: "wireless_ap", field: "wpa_password"});
+					obj.addField({table: "wirelessAp", module: "wireless_ap", field: "wpa_radius_key"});
+					obj.addField({table: "wirelessAp", module: "wireless_ap", field: "wep_key_type"});
+					obj.addField({table: "wirelessAp", module: "wireless_ap", field: "wpa_auth_type"});
+					obj.addField({table: "wirelessAp", module: "wireless_ap", field: "ssid"});
+					obj.addFilter({table: "wirelessAp", module: "wireless_ap", field: "sec_mode", property: "inst", compareValue: "wireless_ap-0"});
+					if(obj.tables['wirelessAp'][0])
+					{
+						switch(obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value.toLowerCase())
+						{
+							case "off":
+									$("#wireless_password").attr("disabled", true);
+							break;
+							case "wep":
+									$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wep_key1'].value);
+							break;
+							case "wpa":
+									if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+									{
+										wpa_regex_id = "wpa";
+										wpa_regex_max_len = "64";
+									$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value);
+									}
+									else
+									{
+										wpa_regex_id = "wpa_secret";
+										wpa_regex_max_len = "64";
+										$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value);
+									}
+							break;
+							case "wpa2":
+									if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+									{
+										wpa_regex_id = "wpa";
+										wpa_regex_max_len = "64";
+									$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value);
+									}
+									else
+									{
+										wpa_regex_id = "wpa_secret";
+										wpa_regex_max_len = "64";
+										$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value);
+									}
+							break;
+							case "wpa_both":
+									if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+									{
+										wpa_regex_id = "wpa";
+										wpa_regex_max_len = "64";
+									$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value);
+									}
+									else
+									{
+										wpa_regex_id = "wpa_secret";
+										wpa_regex_max_len = "64";
+										$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value);
+									}
+							break;
+						}
+						if($("#security").length > 0) setValues("security", "SelectObjSelecting", obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value);
+						if($("#ssid").length > 0) setValues("ssid", "TextBoxObj", obj.tables['wirelessAp'][0]['wireless_ap']['ssid'].value);
+					}
+
+					obj.addField({table: "wirelessWds", module: "wireless_wds", field: "enabled"});
+					obj.addField({table: "wirelessWds", module: "wireless_wds", field: "mac"});
+
+					var showWifi = true;
+					if(obj.tables['wirelessWds'][0])
+					{
+						for(var i = 0; i < obj.tables['wirelessWds'].length; i++)
+						{
+							if(obj.tables['wirelessWds'][i]['wireless_wds']['mac'].value != "" && obj.tables['wirelessWds'][i]['wireless_wds']['enabled'].value == "1")
+							{
+								showWifi = false;
+							}
+						}
+					}
+					if(showWifi)
+					{
+						displaySteps.push("quickSetupWirelessSettingsDiv");
+						saveWifiSettings = true;
+					}
+				}
+
+				obj.addField({table: "wizardObj", module: "sysmgr", field: "fwversion"});
+				obj.addField({table: "wizardObj", module: "cfgmgr", field: "isdefault"});
+				if(obj.tables['wizardObj'][0])
+				{
+					$("#__V_firmware").text(obj.tables['wizardObj'][0]['sysmgr']['fwversion'].value);
+					isDefault = eval(obj.tables['wizardObj'][0]['cfgmgr']['isdefault'].value);
+				}
+				if(isDefault == false)
+				{
+					document.getElementById("pagesettings").style.display = "";
+					document.getElementById("usernamesettings").style.display = "none";
+					isDefault = true;
+				}
+				else
+				{
+					if(getDef("__DEF_ForceDefaultPasswordChange") == 1)
+					{
+						document.getElementById("pagesettings").style.display = "none";
+						document.getElementById("usernamesettings").style.display = "";
+						document.getElementById("modemPasswordNextButton").value = getML("__ML_save_and_continue");
+					}
+					else if(getDef("__DEF_DefaultPasswordControl") == 0)
+					{
+						document.getElementById("pagesettings").style.display = "";
+						document.getElementById("usernamesettings").style.display = "none";
+					}
+					else if(getDef("__DEF_DefaultPasswordControl")  == 1)
+					{
+						document.getElementById("pagesettings").style.display = "none";
+						document.getElementById("usernamesettings").style.display = "";
+						document.getElementById("skipbutton").style.display = "";
+						document.getElementById("modemPasswordNextButton").value = getML("__ML_save_and_continue");
+						$("#skipbutton").show();
+						document.getElementById("skipbutton").value = getML("__ML_continue");
+					}
+				}
+
+				if(__DEF_HideWirelessMenu !=1 && getDef("__DEF_HideADSLMenu") == "1" && getDef("__DEF_HideInternetMenu") == "1")
+				{
+					document.getElementById("__ML_wizard_adsl_wireless_intro").style.display="";
+				}
+				else if(__DEF_HideWirelessMenu == 1 && getDef("__DEF_HideADSLMenu") == "1" && getDef("__DEF_HideInternetMenu") == "1")
+				{
+					document.getElementById("__ML_wizard_adsl_intro").style.display="";
+				}
+
+				direction("next");
+
+				FillSecurityModeCombo();
+				showPage();
+
+				if(__DEF_HideInternetMenu)
+					$("#__ML_wizard_caption").html(getML("__ML_wireless_caption")+ " " + getML("__ML_wizard_caption"));
+			}
+
+			function getDefaultValue(arr, default_value)
+			{
+				try
+				{
+					for(var i = 0; i < arr.length; i++)
+					{
+						if(arr[i] == default_value)
+						{
+							return default_value;
+						}
+					}
+					return arr[0];
+				}
+				catch(ex)
+				{
+					return 0;
+				}
+			}
+
+			function validateModemPassword()
+			{
+				if($("#__V_new_password").val() == "" && getDef("__DEF_BlankPasswordControl") == "1")
+				{
+					alert(getML("__ML_new_password") + getML("__ML_Required_Field"));
+					return false;
+				}
+				if($("#__V_confirm_password").val() == "" && getDef("__DEF_BlankPasswordControl") == "1")
+				{
+					alert(getML("__ML_confirm_password") + getML("__ML_Required_Field"));
+					return false;
+				}
+				if(!getValues("__V_new_password", "TextBoxObj").match(regexContainer["modem_password"].pattern))
+				{
+					alert(__ML_new_password + " " + __ML_Regex_Msg + " [" + regexContainer["modem_password"].format + "] " + getValues("__V_new_password", "TextBoxObj") + " " + __ML_Regex_wrong);
+					return false;
+				}
+				if(getVar("__V_confirm_password") != getVar("__V_new_password"))
+				{
+					alert(__ML_new_password_mismatch);
+					return false;
+				}
+
+				/*
+				if (getVar("__V_cur_password") == getVar("__V_confirm_password"))
+				{
+					alert(__ML_new_password_not_be_same_with_old_password);
+					return false;
+				}
+				*/
+				disablePage();
+				send_check_password_query();
+			}
+			function send_check_password_query ()
+			{
+
+				beginXML();
+				addCommand("webui-0", "check_admin_password", getVar("__V_cur_password"));
+				endXML();
+				sendAJAX(parse_check_password_response);
+			}
+			function parse_check_password_response ()
+			{
+				var isOK = getValue("webui-0","admin_password");
+				if (isOK == "ok")
+				{
+					beginXML();
+					addCommand("cfgmgr-0", "begin_transaction", "webui-0");
+					addCommand("cfgmgr-0", "begin_transaction", "sysmgr-0");
+
+					addSet("webui-0","password", getVar("__V_new_password"));
+					addSet("sysmgr-0","password", getVar("__V_new_password"));
+					addCommand("cfgmgr-0", "commit", "webui-0");
+					addCommand("cfgmgr-0", "commit", "sysmgr-0");
+					addCommand("cfgmgr-0", "save", "");
+
+					addCommand("cfgmgr-0", "end_transaction", "webui-0");
+					addCommand("cfgmgr-0", "end_transaction", "sysmgr-0");
+
+					addCommand("sysmgr-0", "apply_user_info", "");
+					endXML();
+					sendAJAX(nextPage);
+				}
+				else
+				{
+					showPage();
+					alert(__ML_cur_password_wrong);
+					return false;
+				}
+			}
+			function nextPage()
+			{
+				document.getElementById("pagesettings").style.display = "";
+				document.getElementById("usernamesettings").style.display = "none";
+				showPage();
+			}
+
+			function validateSSID(val)
+			{
+				if(val == undefined)
+				{
+					alert(__ML_invalidSSID);
+					return false;
+				}
+
+				if (val.length> 32)
+				{
+					alert(__ML_invalidSSIDMaxLength);
+					return false;
+				}
+				//var regex = new RegExp(/^(([0-9A-Za-z!"#$%'()*+,./:;=?@^_`{|}~\\\[\]-]{1,32}))$/);
+				var regex = new RegExp(/^(?!\x20)[\x20-\x7f]{0,31}[\x21-\x7f]$/);
+				if(!regex.test(val))
+				{
+					alert(__ML_invalidSSID);
+					return false;
+				}
+
+				return true;
+			}
+
+			$(document).ready(function()
+			{
+				if(__DEF_HideWirelessMenu != 1)
+				{
+					var script = document.createElement( 'script' );
+					script.type = 'text/javascript';
+					script.src = "/wireless/classes/wireless_ng.js";
+					$("head").append(script);
+			
+					var script = document.createElement( 'script' );
+					script.type = 'text/javascript';
+					script.src = "/wireless/classes/wireless_ng_ap.js";
+					$("head").append(script);
+				
+					var script = document.createElement( 'script' );
+					script.type = 'text/javascript';
+					script.src = "/wireless/global/global_wireless.js";
+					$("head").append(script);
+				}
+				
+				quickSetupController.documentReady();
+			});
+
+			function direction(way)
+			{
+				for(var i=0, lngth = displaySteps.length;  i < lngth; i++)
+				{
+					document.getElementById(displaySteps[i]).style.display = "";
+				}
+			}
+
+			function setDefaultPassword(val)
+			{
+				switch(obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value)
+				{
+					case "wep":
+							obj.tables['wirelessAp'][0]['wireless_ap']['wep_key1'].value = getValues("wireless_password", "TextBoxObj");
+					break;
+					case "wpa_both":
+							if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value);
+							}
+							else
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value);
+							}
+					break;
+					case "wpa":
+							if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value);
+							}
+							else
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value);
+							}
+					break;
+					case "wpa2":
+							if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value);
+							}
+							else
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value);
+							}
+					break;
+				}
+				switch(val)
+				{
+					case "off":
+						if(confirm(__ML_wireless_security_mode_no_encryption_warning))
+							$("#wireless_password").attr("disabled", true).attr("value", "");
+						else
+							$("#security").val(obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value);
+					break;
+					case "wep":
+							$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wep_key1'].value).attr("disabled", false);
+							obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value = val;
+						break;
+					case "wpa_both":
+							if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value).attr("disabled", false);
+							}
+							else
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value).attr("disabled", false);
+							}
+							obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value = val;
+					break;
+					case "wpa":
+							if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value).attr("disabled", false);
+							}
+							else
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value).attr("disabled", false);
+							}
+							obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value = val;
+					break;
+					case "wpa2":
+							if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_password'].value).attr("disabled", false);
+							}
+							else
+							{
+								$("#wireless_password").attr("value", obj.tables['wirelessAp'][0]['wireless_ap']['wpa_radius_key'].value).attr("disabled", false);
+							}
+							obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value = val;
+					break;
+				}
+			}
+			function ValidatePage()
+			{
+				if(saveADSLSettings)
+				{
+					if(!ppp_username.get_value().match(regexContainer["ppp_username"].pattern))
+					{
+						alert(__ML_username + " " + __ML_Regex_Msg + " [" + regexContainer["ppp_username"].format + "] " + ppp_username.get_value() + " " + __ML_Regex_wrong);
+						return false;
+					}
+					if(getValues("password", "TextBoxObj").length < 1)
+					{
+						alert(__ML_wizard_adsl_password + " " + __ML_Required_Field);
+						return false;
+					}
+					if(!getValues("password", "TextBoxObj").match(regexContainer["ppp_password"].pattern))
+					{
+						alert(__ML_wizard_adsl_password + " " + __ML_Regex_Msg + " [" + regexContainer["ppp_password"].format + "] " + getValues("password", "TextBoxObj") + " " + __ML_Regex_wrong);
+						return false;
+					}
+				}
+				if(saveWifiSettings)
+				{
+					if(getDef("__DEF_WirelessWpsSupport") == "1" && statusOfAirtouch == "1" && $("#security").val() == "wep")
+					{
+						alert(__ML_wireless_certification_validation_msg11);
+						return false;
+					}
+					if(getDef("__DEF_WirelessWpsSupport") == "1" && statusOfAirtouch == "1" && is_wpa($("#security").val()) && obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value != "0")
+					{
+						alert(__ML_wireless_certification_validation_msg12);
+						return false;
+					}
+					if(!is_allowed_security_mode())
+					{
+						return false;
+					}
+					
+					if(!$("#wireless_password").attr("disabled") && $("#wireless_password").val().length < 1)
+					{
+						alert(__ML_wizard_wireless_password + " " + __ML_Required_Field);
+						return false;
+					}
+					
+					if(!validateSSID(getValues("ssid", "TextBoxObj")))
+					{
+						return false;
+					}
+					var webType = "";
+					switch(getValues("security", "SelectObjSelecting"))
+					{
+						case "wep":
+							if(typeof(regexContainer[obj.tables['wirelessAp'][0]['wireless_ap']['wep_key_type'].value]) == "object")
+							{
+								webType = obj.tables['wirelessAp'][0]['wireless_ap']['wep_key_type'].value;
+							}
+							else
+							{
+								webType = "wep_all";
+							}
+							if(regexContainer[webType] != null)
+							{
+								if(!getValues("wireless_password", "TextBoxObj").match(regexContainer[webType].pattern))
+								{
+												alert(__ML_wizard_wireless_password + " " + __ML_Regex_Msg + " [" + regexContainer[webType].format + "] " + getValues("wireless_password", "TextBoxObj") + " " + __ML_Regex_wrong);
+									return false;
+								}
+							}
+						break;
+						case "wpa_both":
+								if(!getValues("wireless_password", "TextBoxObj").match(regexContainer[wpa_regex_id].pattern) || (getValues("wireless_password", "TextBoxObj").length < 8) || (getValues("wireless_password", "TextBoxObj").length > wpa_regex_max_len))
+								{
+									if(wpa_regex_id == "wpa") {
+										alert(__ML_wireless_invalid_wpa_password_alert.replace(/#invalid_value#/g, getValues("wireless_password", "TextBoxObj")));
+									}
+									else if(wpa_regex_id == "wpa_secret"){
+										alert(__ML_wireless_invalid_wpa_secret_alert.replace(/#invalid_value#/g, getValues("wireless_password", "TextBoxObj")));
+									}
+									return false;
+								}
+								break;
+						case "wpa2":
+								if(!getValues("wireless_password", "TextBoxObj").match(regexContainer[wpa_regex_id].pattern) || (getValues("wireless_password", "TextBoxObj").length < 8) || (getValues("wireless_password", "TextBoxObj").length > wpa_regex_max_len))
+								{
+									if(wpa_regex_id == "wpa") {
+										alert(__ML_wireless_invalid_wpa_password_alert.replace(/#invalid_value#/g, getValues("wireless_password", "TextBoxObj")));
+									}
+									else if(wpa_regex_id == "wpa_secret"){
+										alert(__ML_wireless_invalid_wpa_secret_alert.replace(/#invalid_value#/g, getValues("wireless_password", "TextBoxObj")));
+									}
+									return false;
+								}
+								break;
+						case "wpa":
+								if(statusOfAirtouch == "1" && statusOfAirtouchChanged == "1")
+								{
+									if(confirm(__ML_wireless_WPS_warning_wpa_only))
+									{
+										statusOfAirtouchChanged = "0";
+									}
+									else
+									{
+										statusOfAirtouchChanged = "1";
+										return false;
+									}
+								}
+								if(!getValues("wireless_password", "TextBoxObj").match(regexContainer[wpa_regex_id].pattern) || (getValues("wireless_password", "TextBoxObj").length < 8) || (getValues("wireless_password", "TextBoxObj").length > wpa_regex_max_len))
+								{
+									if(wpa_regex_id == "wpa") {
+										alert(__ML_wireless_invalid_wpa_password_alert.replace(/#invalid_value#/g, getValues("wireless_password", "TextBoxObj")));
+									}
+									else if(wpa_regex_id == "wpa_secret"){
+										alert(__ML_wireless_invalid_wpa_secret_alert.replace(/#invalid_value#/g, getValues("wireless_password", "TextBoxObj")));
+									}
+									return false;
+								}
+								break;
+					}
+				}
+				return true;
+			}
+			
+			function is_allowed_security_mode()
+			{
+				var selected_mode = $("#freq option:selected").attr("default_mode");
+				var selected_freq = $("#freq option:selected").val();
+				var selected_freq_name = "";
+				var selected_mode_name = "";
+				var security_mode_names = {"off": __ML_wireless_security_mode_no_encryption, "wpa_both": __ML_both, "wpa": "WPA", "wpa2": "WPA2", "wep": "WEP"};
+
+
+				for(var i = 0; i < obj.tables['freqsList'].length; i++)
+				{
+					if(obj.tables['freqsList'][i]['wireless_core']['freq'].value == selected_freq)
+					{
+						selected_freq_name = obj.tables['freqsList'][i]['wireless_core']['freqValue'].value;
+						var modeValues =  obj.tables['freqsList'][i]['wireless_core']['modeValues'].value.split("|");
+						var modes =  obj.tables['freqsList'][i]['wireless_core']['modes'].value.split("|");
+						for(var j = 0; j < modeValues.length; j++)
+						{
+							if(modeValues[j] == selected_mode)
+							{
+								selected_mode_name = modes[j];
+							}
+						}
+					}
+				}
+
+
+				var allowed_list = [];
+				for(var i = 0; i < obj.tables['validation'].length; i++)
+				{
+					if(obj.tables['validation'][i]['wireless_core']['mode'].value == selected_mode && obj.tables['validation'][i]['wireless_core']['freq'].value == selected_freq)
+					{
+						allowed_list = obj.tables['validation'][i]['wireless_core']['security'].value.split("|");
+						break;
+					}
+				}
+					var selected_security = $("#security").val();
+					var allowed = false;
+					for(var j = 0; j < allowed_list.length; j++)
+					{
+						if(allowed_list[j] == selected_security)
+						{
+							allowed = true;
+						}
+					}
+					if(!allowed)
+					{
+						alert(__ML_wireless_certification_validation_mode_security_msg.replace("@mode@", selected_mode_name).replace("@security@", security_mode_names[selected_security]));
+						return false;
+				}
+				return true;
+			}
+			
+			function FillSecurityModeCombo()
+			{
+				var selected_mode = $("#freq option:selected").attr("default_mode");
+				var selected_freq = $("#freq option:selected").val();
+				var allowed_list = [];
+
+				for(var i = 0; i < obj.tables['validation'].length; i++)
+				{
+					if(obj.tables['validation'][i]['wireless_core']['mode'].value == selected_mode && obj.tables['validation'][i]['wireless_core']['freq'].value == selected_freq)
+					{
+						allowed_list = obj.tables['validation'][i]['wireless_core']['security'].value.split("|");
+						break;
+					}
+				}
+				
+				var sec_mode_option = "";
+				for(var j = 0; j < allowed_list.length; j++)
+				{
+					if(obj.tables['wirelessAp'][0]['wireless_ap']['sec_mode'].value == allowed_list[j])
+					{
+						sec_mode_option += "<option value='"+allowed_list[j]+"' selected='selected'>"+ getML("__ML_wireless_security_mode_" + allowed_list[j]) +"</option>";
+					}
+					else
+					{
+						sec_mode_option += "<option value='"+allowed_list[j]+"'>"+ getML("__ML_wireless_security_mode_" + allowed_list[j]) +"</option>";
+					}
+				}
+				$("#security").html(sec_mode_option);
+			}
+			
+			function Save()
+			{
+				disablePage();
+				beginXML();
+				if(saveWifiSettings)
+				{
+					disablePage();
+					if($("#freq").attr("id") != undefined)
+					{
+						addCommand("cfgmgr-0", "begin_transaction", "wireless_core-0");
+						addSet(obj.tables['freqsList'][0]['wireless_core']['freq'].inst, "freq", $("#freq option:selected").attr("value"));
+						addSet(obj.tables['freqsList'][0]['wireless_core']['freq'].inst, "txmode", $("#freq option:selected").attr("default_mode"));
+						addSet(obj.tables['freqsList'][0]['wireless_core']['freq'].inst, "channel", $("#freq option:selected").attr("default_channel"));
+						addSet(obj.tables['freqsList'][0]['wireless_core']['freq'].inst, "chanbw", $("#freq option:selected").attr("default_bandwidth"));
+						if($("#security").val() == "wpa")
+							addSet(obj.tables['freqsList'][0]['wireless_core']['freq'].inst, "wps_enabled", statusOfAirtouchChanged);
+						addCommand("cfgmgr-0", "commit", obj.tables['freqsList'][0]['wireless_core']['freq'].inst);
+						addCommand("cfgmgr-0", "end_transaction", obj.tables['freqsList'][0]['wireless_core']['freq'].inst);
+					}
+
+					addCommand("cfgmgr-0", "begin_transaction", "wireless_ap-0");
+					addSet("wireless_ap-0", "ssid", getValues("ssid", "TextBoxObj"));
+					addSet("wireless_ap-0", "sec_mode", getValues("security", "SelectObjSelecting"));
+
+					if(getValues("security", "SelectObjSelecting").indexOf("wpa") != -1)
+					{
+						if(obj.tables['wirelessAp'][0]['wireless_ap']['wpa_auth_type'].value == "0")
+						{
+						addSet("wireless_ap-0", "wpa_password", getValues("wireless_password", "TextBoxObj"));
+						}
+						else
+						{
+							addSet("wireless_ap-0", "wpa_radius_key", getValues("wireless_password", "TextBoxObj"));
+						}
+
+					}
+					else
+					{
+						addSet("wireless_ap-0", "wep_key1", getValues("wireless_password", "TextBoxObj"));
+					}
+
+					if(getDef("__DEF_WirelessWpsSupport") == "1")
+					{
+						addCommand("cfgmgr-0", "begin_transaction", "wireless_core-0");
+						addSet("wireless_core-0", "wps_config_uuid_update", "");
+						addSet("wireless_core-0", "wps_role", "registrar");
+						addCommand("cfgmgr-0", "commit", "wireless_core-0");
+						addCommand("cfgmgr-0", "end_transaction", "wireless_core-0");
+					}
+
+					addCommand("cfgmgr-0", "commit", "wireless_ap-0");
+					addCommand("cfgmgr-0", "end_transaction", "wireless_ap-0");
+					addCommand("cfgmgr-0", "save", "");
+					addCommand("wireless_core-0", "apply", "");
+				}
+				if(saveADSLSettings)
+				{
+					if((currentUsername != ppp_username.get_value()) || (currentPassword != getValues("password", "TextBoxObj")))
+					{
+						if(__DEF_UsernameEditTypeInADSLSettings == "twain") ChangeUsernameFormat();
+						addCommand("cfgmgr-0", "begin_transaction", obj.tables['wanList'][0]['pppox']['settings.username'].inst);
+						addSet(obj.tables['wanList'][0]['pppox']['settings.username'].inst, "username", ppp_username.get_value());
+						addSet(obj.tables['wanList'][0]['pppox']['settings.username'].inst, "password", getValues("password", "TextBoxObj"));
+						addCommand("cfgmgr-0", "commit", obj.tables['wanList'][0]['pppox']['settings.username'].inst);
+						addCommand("cfgmgr-0", "end_transaction", obj.tables['wanList'][0]['pppox']['settings.username'].inst);
+						addCommand("cfgmgr-0", "save", "");
+						addCommand(obj.tables['wanList'][0]['pppox']['settings.username'].inst, "apply", "");
+					}
+				}
+				endXML();
+				sendAJAX(savedPage);
+			}
+			function savedPage()
+			{
+				if(quickSetupModel.instances.length > 0)
+					quickSetupController.save();
+				else
+					quickSetupController.documentReady();
+			}
+			function Homepage()
+			{
+				window.top.location.href="/main.html";
+			}
+			function Cancel()
+			{
+				location.reload();
+			}
+			function ChangeUsernameFormat()
+			{
+					var usernameExt = __DEF_UsernameExt.split(":");
+					if(__DEF_UsernameEditTypeInADSLSettings == "twain" && usernameExt.length <= 1) usernameControl = "UsernameTwain";
+					if(__DEF_UsernameEditTypeInADSLSettings == "twain" && usernameExt.length > 1) usernameControl = "UsernameCombo";
+					if(usernameControl != "UsernameStandart")
+					{
+						var controlFactory = new ControlFactory();
+						var __of_obj = document.getElementById("UsernameCell");
+						var username; var network; var childNodes;
+
+						if(usernameCurrentControl == usernameStandartControl)
+						{
+							var tempobj = __of_obj.childNodes[0].value.split("@");
+							username = tempobj[0];
+							network = tempobj[1];
+							__of_obj.innerHTML = controlFactory.Create(usernameControl).DynamicUI(username, network);
+							usernameCurrentControl = usernameControl;
+						}
+						else if(usernameCurrentControl == "UsernameTwain")
+						{
+							var tempobj = __of_obj.childNodes;
+							username = __of_obj.childNodes[0].value;
+							network = __of_obj.childNodes[1].nodeValue + __of_obj.childNodes[2].value;
+							__of_obj.innerHTML = controlFactory.Create(usernameStandartControl).DynamicUI(username, network);
+							usernameCurrentControl = usernameStandartControl;
+						}
+						else if(usernameCurrentControl == "UsernameCombo")
+						{
+							var tempobj = __of_obj.childNodes;
+							username = __of_obj.childNodes[0].value;
+							for(var i = 0; i < __of_obj.childNodes[2].options.length; i++)
+							{
+								if(__of_obj.childNodes[2].options[i].selected == true)
+								{
+									network = __of_obj.childNodes[1].nodeValue + __of_obj.childNodes[2].options[i].value;
+								}
+							}
+							__of_obj.innerHTML = controlFactory.Create(usernameStandartControl).DynamicUI(username, network);
+							usernameCurrentControl = usernameStandartControl;
+						}
+					}
+			}
+
+			function getCurrentOperatingMode()
+			{
+				var current_op_mode =  obj.tables['currentOpMode'][0]['wireless_core']['op_mode'].value;
+				var current_op_mode_ml = "";
+				switch(current_op_mode)
+				{
+				case 'ap':
+					current_op_mode_ml = getML("__ML_wireless_operating_mode_ap");
+				  break;
+				case 'sta':
+					current_op_mode_ml = getML("__ML_wireless_operating_mode_sta");
+					$("#wireless_wizard").hide();
+					$("#savebuttons").hide();
+				  break;
+				case 'repeater':
+					current_op_mode_ml = getML("__ML_wireless_operating_mode_repeater");
+					$("#wireless_wizard").hide();
+					$("#savebuttons").hide();
+				  break;
+				default:
+				}
+				
+				$("#current_op_mode").html(current_op_mode_ml);
+			}
+
+			function validateWirelessNg(index)
+			{
+				if(saveWifiSettings)
+				{
+					var secMode = getValues("security_"+index, "SelectObjSelecting");
+					var password = getValues("wireless_password_"+index, "TextBoxObj");
+					
+					if(!$("#wireless_password_"+index).attr("disabled") && password.length < 1)
+					{
+						alert(__ML_wizard_wireless_password + " " + __ML_Required_Field);
+						return false;
+					}
+					if(!validateSSID(getValues("ssid_"+index, "TextBoxObj")))
+					{
+						return false;
+					}
+
+					var regex;
+					
+					if(globalWireless.isWpa(secMode))
+					{
+						if(quickSetupModel.instances[index].aps[0].wpa_auth_type == "enterprise")
+						{
+ 							regex = new RegExp("^(([0-9A-Za-z!\"#$%'()*+,./:;=?@^_`{|}~\\\\[\\]-]{8,64}))$");
+							if(!regex.test(password))
+							{
+								alert(message=__ML_login_password + " " + __ML_Regex_Msg + " (abc.1234)8-64 " + __ML_characters + " " + password + " " + __ML_Regex_wrong);
+								return false;
+							}
+						}
+						else
+						{
+							if(secMode == "wpa" && quickSetupModel.instances[index].configSettings.airTouch)
+							{
+								if(confirm(__ML_wireless_WPS_warning_wpa_only))
+								{
+									quickSetupModel.instances[index].configSettings.airTouchChanged = false;
+								}
+								else
+								{
+									quickSetupModel.instances[index].configSettings.airTouchChanged = quickSetupModel.instances[index].configSettings.airTouch;
+									return false;
+								}
+							}
+							regex = new RegExp("^(([0-9A-Za-z!\"#$%'()*+,./:;=?@^_`{|}~\\\\[\\]-]{8,63}))$");
+							if(!regex.test(password))
+							{
+								alert(message=__ML_login_password + " " + __ML_Regex_Msg + " (abc.1234)8-63 " + __ML_characters + " " + password + " " + __ML_Regex_wrong);
+								return false;
+							}
+						}
+					}
+					else if(secMode == "wep")
+					{
+						regex = new RegExp("^(?:[0-9a-fA-F]{10}|[\\s\\S]{5}|[0-9a-fA-F]{26}|[\\s\\S]{13})?$");
+						if(password && !regex.test(password))
+						{
+							alert(message=__ML_login_password + " " + __ML_Regex_Msg + " (5-10-13-26 " + __ML_characters  + ") " + password + " " + __ML_Regex_wrong);
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+			
+			function addManagerTabs()
+			{
+				$("#managerSelector").remove();
+				$(".managerTab").remove();
+				$("#quickSetupTopDiv").html("<div id='tabs'></div>");
+				$("#tabs").html("<ul id='managerSelectorUl'></ul>");
+			}
+
+			function addInternetTab(index)
+			{
+				var managerTabId = "tabs-" + (index+1);
+				
+				var managerTab = $("<div id='" + managerTabId + "' class='quickSetupManagerTab'></div>").appendTo("#tabs");
+
+				$("#managerSelectorUl").append("<li><a href='#tabs-" + (index+1) + "'>Internet</a></li>");
+
+				managerTab.html(internetTabContent());
+				
+			}
+
+			function addCoreTab(index)
+			{
+				var managerTabId = "tabs-" + (index+1);
+
+				var managerTab = $("<div id='" + managerTabId + "' class='quickSetupManagerTab'></div>").appendTo("#tabs");
+
+				//$("#managerSelectorUl").append("<li><a href='#tabs-" + (index+1) + "'>" + getML('__ML_wireless_network_lan') + " " + (index+1) + "</a></li>");
+				var freq = obj.tables['freqsList'][0]['wireless_core']['freqValue'].value;
+				$("#managerSelectorUl").append("<li><a href='#tabs-" + (index+1) + "'>" + getML('__ML_wireless_network_lan') + " " + "("+ freq +")</a></li>");
+
+				managerTab.html(wirelessCoreTabContent(index));
+			}
+
+			function addNgTab(index)
+			{
+				var managerTabId = "tabs-" + (index+1);
+
+				var managerTab = $("<div id='" + managerTabId + "' class='quickSetupManagerTab'></div>").appendTo("#tabs");
+
+				//$("#managerSelectorUl").append("<li><a href='#tabs-" + (index+1) + "'>" + getML('__ML_wireless_network_lan') + " " + (index+1) + "</a></li>");
+				var freq = quickSetupModel.instances[index-1].freqs[quickSetupModel.instances[index-1].configSettings.freq].text;
+				$("#managerSelectorUl").append("<li><a href='#tabs-" + (index+1) + "'>" + getML('__ML_wireless_network_lan') + " " + (quickSetupModel.instances.length > 1 ? (index+1) : "") + " ("+ freq +")</a></li>");
+
+				managerTab.html(wirelessNgTabContent(index-1));
+
+				fillWirelessNgElements(index-1);
+			}
+
+			function fillWirelessNgElements(index)
+			{
+				var ap = quickSetupModel.instances[index].aps[0];
+				
+				$("#ssid_"+index).val(ap.ssid);
+
+				var freqSpanValueId = "__ML_wizard_wireless_freq_"+index;
+				var freqControlId = "freq_"+index;
+				var secModeControlId = "security_"+index;
+				var passwordControlId = "wireless_password_"+index;
+				var opModeSpanValueId = "current_op_mode_"+index;
+
+				$("#" + opModeSpanValueId).html(getML("__ML_wireless_operating_mode_" + quickSetupModel.instances[index].configSettings.opMode));
+				
+				var freqComboOptionTemplate = "<option value='<value>' id='<id>'><text></option>";				
+
+				var counter = 0;
+				var freq = "";
+				for(freq in quickSetupModel.instances[index].freqs)
+				{
+					$("#" + freqControlId).append(freqComboOptionTemplate.replace("<value>", freq).replace("<text>", quickSetupModel.instances[index].freqs[freq].text));
+					counter++;
+				}
+
+				$("#" + freqControlId).val(quickSetupModel.instances[index].freqs[quickSetupModel.instances[index].configSettings.freq].text);
+
+				if(counter == 1)
+				{
+					$("#" + freqControlId).after('<span id="freqValue_'+index+'">'+quickSetupModel.instances[index].freqs[freq].text+'</span>');
+					$("#" + freqControlId).hide();
+				}
+
+				if(global.objectSize(quickSetupModel.instances[index].operationModes) < 2) $("#configureOpModeDiv_" + index).hide();
+				
+				FillSecurityModeComboForNg(index);
+				FillWirelessNgPassword(index);
+			}
+
+			function FillSecurityModeComboForNg(index)
+			{
+				var secModeControlId = "security_"+index;
+				var ap = quickSetupModel.instances[index].aps[0];
+				var freqValue = $("#freq_"+index).val();
+				
+				var selectedFreq = quickSetupModel.instances[index].freqs[freqValue];
+				var selectedMode = selectedFreq.modes[selectedFreq.defaultMode];
+
+				var securityComboOptionTemplate = "<option value='<value>'><text></option>";
+				
+				$("#" + secModeControlId).html("");
+				for(var i=0; i<selectedMode.securityModes.length; i++)
+				{
+					$("#" + secModeControlId).append(securityComboOptionTemplate.replace("<value>", selectedMode.securityModes[i]).replace("<text>", getML("__ML_wireless_security_mode_"+selectedMode.securityModes[i])));
+				}
+
+				$("#" + secModeControlId).val(ap.sec_mode);
+			}
+
+			function FillWirelessNgPassword(index)
+			{
+				var ap = quickSetupModel.instances[index].aps[0];
+				var secModeControlId = "security_"+index;
+				var passwordControlId = "wireless_password_" + index;
+				
+				var value = "";
+				var disabled = false;
+
+				switch($("#" + secModeControlId).val())
+				{
+					case "off":
+						disabled = true;
+						break;
+					case "wep":
+						value = ap.wep_key1;
+						break;
+					case "wpa":
+					case "wpa2":
+					case "wpa_both":
+						if(ap.wpa_auth_type == "1")
+						{
+							value = ap.wpa_radius_key;
+						}
+						else
+						{
+							value = ap.wpa_password;
+						}
+						break;
+				}
+
+				$("#" + passwordControlId).attr("disabled", disabled);
+				$("#" + passwordControlId).val(value);
+			}
+
+			function wirelessNgSecurityComboBoxChanged(index)
+			{
+				var ap = quickSetupModel.instances[index].aps[0];
+				var secModeControlId = "security_"+index;
+				var passwordControlId = "wireless_password_" + index;
+
+				if($("#" + secModeControlId).val() == "off")
+				{
+					if(confirm(__ML_wireless_security_mode_no_encryption_warning))
+					{
+						$("#" + passwordControlId).attr('disabled','disabled').val("");
+					}
+					else
+					{
+						$("#" + secModeControlId).val(ap.sec_mode);
+					}
+				}
+				else
+				{
+					$("#" + passwordControlId).removeAttr('disabled');
+					FillWirelessNgPassword(index);
+				}
+			}
+
+			function wirelessCoreTabContent(index)
+			{
+				var table = '';
+
+				table += '	<div id="quickSetupWirelessSettingsDiv">';
+				table += '						<table>';
+				table += '							<tbody>';
+				table += '								<tr>';
+				table += '									<td colspan="2" class="textCenter">';
+				table += '										<span id="__ML_wireless_operating_mode"></span> <span id="current_op_mode"></span><span id="configureOpModeDiv"> – <a href="/wireless/settings/settings_new.html?managerIndex=0" target="mainFrame"><strong><span id="__ML_wireless_operating_mode_configure"></span></strong></a></span>';
+				table += '									</td>';
+				table += '								</tr>';
+				switch(obj.tables['currentOpMode'][0]['wireless_core']['op_mode'].value) {
+					case "ap":
+				table += '								<tr>';
+				table += '									<td><span id="__ML_wizard_wireless_ssid">Kablosuz Ağ Adı</span></td>';
+				table += '									<td><input type="text" value="WIRELESS_SSID" id="ssid" /></td>';
+				table += '								</tr>';
+				table += '								<tr id="freq_row">';
+				table += '									<td><span id="__ML_wizard_wireless_freq"></span></td>';
+				table += '									<td>';
+				table += '										<select id="freq" onclick="FillSecurityModeCombo();">';
+				table += '										</select>';
+				table += '									</td>';
+				table += '								</tr>';
+				table += '								<tr>';
+				table += '									<td><span id="__ML_wizard_wireless_security"></span></td>';
+				table += '									<td>';
+				table += '										<select name="security" id="security" onchange="setDefaultPassword(this.value);">';
+				table += '											<option value="off" id="__ML_wireless_security_mode_no_encryption"></option>';
+				table += '											<option value="wpa_both" id="__ML_both"></option>';
+				table += '											<option value="wpa2">WPA2</option>';
+				table += '											<option value="wpa">WPA</option>';
+				table += '											<option value="wep">WEP</option>';
+				table += '										</select>';
+				table += '									</td>';
+				table += '								</tr>';
+				table += '								<tr>';
+				table += '									<td><span id="__ML_wizard_wireless_password">Kablosuz Şifre</span></td>';
+				table += '									<td><input type="text" name="wireless_password" id="wireless_password" /></td>';
+				table += '								</tr>';
+						break;
+					// case "sta":
+						// table += '								<tr>';
+						// table += '									<td colspan="2" style="text-align:center;"><span id="__ML_wireless_operating_mode_bridge_mode_no_access_warning" ml="__ML_wireless_operating_mode_bridge_mode_no_access_warning"></span></td>';
+						// table += '								</tr>';
+						// break;
+					// case "repeater":
+						// table += '								<tr>';
+						// table += '									<td colspan="2" style="text-align:center;"><span id="__ML_wireless_operating_mode_repeater_mode_no_access_warning" ml="__ML_wireless_operating_mode_repeater_mode_no_access_warning"></span></td>';
+						// table += '								</tr>';
+						// break;
+				} 
+				
+				table += '							</tbody>';
+				table += '						</table>';
+				table += '	</div>';
+				return table;
+			}
+
+			function wirelessNgTabContent(index)
+			{
+				var table = '';
+
+				table += '	<div id="quickSetupWirelessSettingsDiv">';
+				table += '						<table>';
+				table += '							<tbody>';
+				table += '								<tr>';
+				table += '									<td colspan="2" class="textCenter">';
+				table += '										<span id="__ML_wireless_operating_mode"></span> <span id="current_op_mode_'+index+'"></span><span id="configureOpModeDiv_'+index+'"> – <a href="/wireless/settings/settings_new.html?managerIndex='+(index+1)+'" target="mainFrame"><strong><span id="__ML_wireless_operating_mode_configure"></span></strong></a></span>';
+				table += '									</td>';
+				table += '								</tr>';
+				table += '								<tr>';
+				table += '									<td><span id="__ML_wizard_wireless_ssid">Kablosuz Ağ Adı</span></td>';
+				table += '									<td><input type="text" value="WIRELESS_SSID" id="ssid_'+index+'" /></td>';
+				table += '								</tr>';
+				table += '								<tr id="freq_row_'+index+'">';
+				table += '									<td><span id="__ML_wizard_wireless_freq"></span></td>';
+				table += '									<td>';
+				table += '										<select id="freq_'+index+'" onclick="FillSecurityModeComboForNg('+index+');">';
+				table += '										</select>';
+				table += '									</td>';
+				table += '								</tr>';
+				table += '								<tr>';
+				table += '									<td><span id="__ML_wizard_wireless_security"></span></td>';
+				table += '									<td>';
+				table += '										<select name="security_'+index+'" id="security_'+index+'" onchange="wirelessNgSecurityComboBoxChanged('+index+')">';
+				table += '											<option value="off" id="__ML_wireless_security_mode_no_encryption"></option>';
+				table += '											<option value="wpa_both" id="__ML_both"></option>';
+				table += '											<option value="wpa2">WPA2</option>';
+				table += '											<option value="wpa">WPA</option>';
+				table += '											<option value="wep">WEP</option>';
+				table += '										</select>';
+				table += '									</td>';
+				table += '								</tr>';
+				table += '								<tr>';
+				table += '									<td><span id="__ML_wizard_wireless_password">Kablosuz Şifre</span></td>';
+				table += '									<td><input type="text" name="wireless_password_'+index+'" id="wireless_password_'+index+'" /></td>';
+				table += '								</tr>';
+				table += '							</tbody>';
+				table += '						</table>';
+				table += '	</div>';
+				return table;
+			}
+
+			function internetTabContent()
+			{
+				var table = '';
+				
+				table += '<table>';
+				table += '	<tbody>';
+				table += '		<tr>';
+				table += '			<td ><span id="__ML_wizard_adsl_username">ADSL Kullanıcı adı</span></td>';
+				table += '			<td id="UsernameCell"></td>';
+				table += '		</tr>';
+				table += '		<tr>';
+				table += '			<td ><span id="__ML_wizard_adsl_password">ADSL Şifresi</span></td>';
+				table += '			<td><input type="password"  value="" id="password" /></td>';
+				table += '		</tr>';
+				table += '		<tr id="tr_internet_protocole">';
+				table += '			<td ><span id="__ML_wizard_adsl_protocol">Protokol</span></td>';
+				table += '			<td><span id="__V_adsl_connection_type"></span></td>';
+				table += '		</tr>';
+				table += '		<tr style="display:none;">';
+				table += '			<td><span id="__ML_wizard_adsl_protocol">Protokol</span></td>';
+				table += '			<td>';
+				table += '				<select id="protocol" name="protocol">';
+				table += '					<option value="pppoe"> PPPoE </option>';
+				table += '					<option value="pppoa"> PPPoA </option>';
+				table += '				</select>';
+				table += '			</td>';
+				table += '		</tr>';
+				table += '	</tbody>';
+				table += '</table>';
+
+				return table;
+			}
+		</script>
+	</head>
+	<body onunload="return false;">
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		<div id="contentDiv" style="display:none;">
+			<div class="textCenter title">
+				<span id="__ML_wizard_caption" ml="__ML_wizard_caption"></span>
+			</div>
+			<div id="usernamesettings">
+				<table class="marginCenter wizardTable globalBorder">
+					<thead>
+						<tr>
+							<th><span id="__ML_password_settings">Password Settings</span></th>
+						</tr>
+					</thead>
+					<tr>
+						<td valign="top">
+							<span id="__ML_password_intro"></span>
+							<table>
+								<tr>
+									<td>
+										<span id="__ML_cur_password">Current Password</span>:
+									</td>
+									<td>
+										<input type="password" id="__V_cur_password" maxlength="32">
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<span id="__ML_new_password">New Password</span>:
+									</td>
+									<td>
+										<input type="password" id="__V_new_password" maxlength="32">
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<span id="__ML_confirm_password">Confirm New Password</span>:
+									</td>
+									<td>
+										<input type="password" id="__V_confirm_password" maxlength="32"/>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align:center;">
+							<input type="button" value="__ML_save_and_continue" id="modemPasswordNextButton" onclick="validateModemPassword();" />
+							<input type="button" value="__ML_next" id="skipbutton" onclick="nextPage();" style="display:none;" />
+						</td>
+					</tr>
+				</table>
+				</div>
+
+				<div id="quickSetupTopDiv" class="marginCenter">
+				</div>
+
+				<div id="pagesettings" style="display:none;">
+					<div id="dsl" style="display:none;" class="center globalHeaderInfoDiv">
+						<div id="dsl-active" style="display:none;">
+							<span id="__ML_wizard_adsl_intro" style="display:none;">Bu ekranda ADSL ayarlarlarınızı yapılandırabilirsiniz</span>
+							<span id="__ML_wizard_adsl_wireless_intro" style="display:none;">Bu ekranda ADSL ve KABLOSUZ ayarlarlarınızı yapılandırabilirsiniz</span>
+						</div>
+						<div id="dsl-not-active" class="notice" style="display:none;">
+							<span id="__ML_wizard_adsl_not_pppox">ADSL Ayarlarınız pppoe veya pppoa olmadığından bu bölümde adsl ayarları yapılandırılamaz.</span>
+						</div>
+					</div>
+					
+					<div id="savestatus" class="saveMessage" style="display : none;">
+						<span id="__ML_saved_success"></span>
+					</div>
+					<table class="marginCenter wizardTable">
+					<thead>
+						<tr id="tr_connection_information">
+							<th>
+								<span id="__ML_wizard_connection_information"></span>
+							</th>
+							<th class="textRight">
+								<input id="__ML_refresh" type="button" role="button" aria-disabled="false" onclick="Cancel();" />
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+
+						<tr id="tr_adsl_connection">
+							<td><span id="__ML_adsl_connection">ADSL Bağlantısı:</span></td>
+							<td><span id="__V_adsl_connection">&nbsp;</span></td>
+						</tr>
+
+						<tr id="tr_internet_connection">
+							<td><span id="__ML_internet_connection">İnternet Bağlantısı:</span></td>
+							<td><span id="__V_internet_connection"> &nbsp;</span></td>
+						</tr>
+
+						<tr id="tr_internet_ip">
+							<td><span id="__ML_internet_ip">İnternet IP Adresi:</span></td>
+							<td><span id="__V_internet_ip">&nbsp;</span></td>
+						</tr>
+
+						<tr id="tr_firmware_version">
+							<td><span id="__ML_firmware">Firmware Version:</span></td>
+							<td><span id="__V_firmware">&nbsp;</span></td>
+						</tr>
+					</tbody>
+					</table>
+
+				</div>
+			</div>
+	</body>
+</html>

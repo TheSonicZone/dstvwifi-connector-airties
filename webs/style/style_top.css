@@ -1,0 +1,45 @@
+/*AirTies*/
+
+a{
+	color: #0095DA;
+}
+
+a:hover{
+	color: #CCC;
+}
+
+#head
+{
+	height:112px;
+	margin-bottom:38px;
+	/*background: url(/images/v_line_bg.gif);*/
+}
+
+#logo
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	background: url(/images/multichoice_logo_blue_white.gif) no-repeat;
+	width: 301px;
+	height: 112px;
+}
+
+#language
+{
+	position: absolute;
+	top: 10px;
+	right: 20px;
+	color: #FFF;
+}
+
+#productType
+{
+	font-size: 2.5em;
+	color: #0095DA;
+	/*text-shadow: 0 1px 0 #666;*/
+	float: right;
+	margin-top: 30px;
+	margin-right: 20px;
+}

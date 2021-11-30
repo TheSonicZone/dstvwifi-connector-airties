@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+
+	<head>
+		<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+		<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE">
+		<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8">
+		
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+		<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+		
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+		
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript" language="JavaScript">
+		var submitted = false;
+		var status_modem;
+		
+		
+		parseURI();
+		
+		$(document).ready(function()
+		{
+			initialStartQuery();
+			
+			$('#_UI_entered_config_').bind('change', function() {
+				
+				try
+				{
+					$("#__ML_restore_config").button({disabled: true});
+					if(this.files[0].size > 65536) {
+						alert(__ML_file_is_too_big);
+					}
+					else if(this.files[0].size < 500) {
+						alert(__ML_file_is_too_small);
+					}
+					else {
+						$("#__ML_restore_config").button({disabled: false});
+					}
+				}
+				catch(err)
+				{
+					$("#__ML_restore_config").button({disabled: false});
+				}
+
+			});
+			
+			$(".templateText:not(" + __DEF_ui_template + ")").hide();
+			$(".templateText." + __DEF_ui_template).show();
+			
+			if (!__DEF_ShowSaveConfigOnheToolsPage) {
+				$("#saveConfigRow").hide();
+			}
+			
+			if (!__DEF_ShowRestoreConfigOnheToolsPage) {
+				$("#restoreConfigRow").hide();
+			}
+
+
+		    showPage();
+
+		    // globalView.addRowClass();
+		    globalView.addButtonClass();
+		});
+		
+		var obj;
+		
+		function initialStartQuery()
+		{
+			obj = new uiObject();
+			obj.addQuery({module: "devmgr", key: "inst_list", value: "devmgr"});
+			
+			obj.query();
+		}
+		
+		function ClickReboot()
+		{
+			if(confirm(__ML_reboot_confirm_message))
+			{
+				if (!submitted)
+				{
+					status_modem = "restart_modem";
+					top.location.href = "../tools/wait_reboot.html?status_modem="+status_modem;
+					//send_reboot_query();
+				}
+			}
+		}
+		
+		function ClickFacrotyDefaults()
+		{
+			if(confirm(__ML_factory_defaults_confirm_message))
+			{
+				if (!submitted)
+				{
+					status_modem = "fact_modem";
+					top.location.href="../tools/wait_reboot.html?status_modem="+status_modem+"&redirectIp="+getDef("__DEF_DefaultIpAddress");
+					//send_defaults_query();
+				}
+			}
+		}
+		function SendDownloadBackupFile()
+		{
+			beginXML();
+			addCommand("cfgmgr-0","backup_file","");
+			endXML();
+			var fn = parse_download_backup_response;
+			sendAJAX(fn);
+		}
+		
+		function parse_download_backup_response()
+		{
+			var fileExists;
+			fileExists=getValue("cfgmgr-0","backup_file");
+		
+			if(fileExists == "0")
+		    		DownloadFile();
+			else
+				alert(__ML_Config_File_Not_Exist);
+		}
+		
+		function DownloadFile()
+		{
+		
+			var browser=navigator.appName;
+		
+			if (browser=="Microsoft Internet Explorer")
+			{
+				//document.execCommand('SaveAs',null,"/config.bin");
+				//window.open("/config.bin");
+				document.location.href = "/config.bin";
+			}
+			else
+			{
+				document.location.href = "/config.bin";
+				//window.open("/config.bin");
+			}
+		
+		}
+		function ClickRestoreConfig(value)
+		{
+			if((value == null) || (value == ""))
+			{
+				alert(__ML_Config_File_Alert);
+				return false;
+			}
+		    if (!submitted)
+		    {
+				document.getElementById("__ML_restore_config").disabled = true;
+				document.getElementById("uiPostRestoreConfigForm").submit();
+			    status_modem = "restore_modem";
+				return true;
+		        //send_defaults_query();
+		    }
+		}
+		/*
+		function send_reboot_query()
+		{
+		    beginXML();
+		    addCommand("sysmgr-0","reboot","");
+		    endXML();
+		    var fn = parse_reboot_response;
+		    sendAJAX(fn);
+		}
+		
+		function parse_reboot_response()
+		{
+		    //top.location.href="/tools/wait_reboot.html";
+		}
+		
+		function send_defaults_query()
+		{
+		    beginXML();
+		    addCommand("cfgmgr-0","factory_default","");
+		    addCommand("sysmgr-0","reboot","");
+		    endXML();
+		    var fn = parse_defaults_response;
+		    sendAJAX(fn);
+		}
+		
+		function parse_defaults_response()
+		{
+		    //top.location.href="/tools/wait_reboot.html";
+		}
+		*/
+		
+		</script>
+	</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		
+		<div id="contentDiv" style="display:none">
+			<div class="textCenter title">
+				<span id="__ML_tools_text" ml="__ML_tools_text"></span>
+			</div>
+
+            <table id="uiTable2" class="globalTable marginCenter verticalAlignTopTable">
+            	<tbody>
+	                <tr>
+						<td>
+							<input type="button" name="" value="Restart" id="__ML_restart_button" class="globalLargeButton" onclick="ClickReboot()">
+	                   	</td>
+	 					<td>
+	                        <span id="__ML_system_restart_text" class="other templateText">
+	                        </span>
+	                        <span id="__ML_system_restart_text_2" class="sky_wifi_link templateText">
+	                        </span>
+	                        <span id="__ML_system_restart_text_3" class="sky_wifi_booster templateText">
+	                        </span>
+	                    </td>
+	                </tr>
+	                <tr>
+						<td>
+							<input type="button" name="" value="Restore Factory Defaults" class="globalLargeButton" id="__ML_restore_factory_defaults" onclick="ClickFacrotyDefaults()">
+						</td>
+						<td>
+							<span id="__ML_restore_factory_defaults_text" class="other templateText">
+							</span>
+							<span id="__ML_restore_factory_defaults_text_2" class="sky_wifi_link templateText">
+							</span>
+							<span id="__ML_restore_factory_defaults_text_3" class="sky_wifi_booster templateText">
+							</span>
+						</td>
+					</tr>
+					<tr id="saveConfigRow">
+	   	    			<td>
+	   						<input type="button" name="" value="Save Config" class="globalLargeButton" id="__ML_save_config" onclick="SendDownloadBackupFile()">
+						</td>
+						<td>
+	                         <span id="__ML_save_config_text" class="other templateText">
+	                         </span>
+	                         <span id="__ML_save_config_text_2" class="sky_wifi_link templateText">
+	                         </span>
+	                         <span id="__ML_save_config_text_3" class="sky_wifi_booster templateText">
+	                         </span>
+	                     </td>
+					</tr>
+					<tr id="restoreConfigRow">
+						<td>
+							<input type="button" name="" value="Restore Saved Config" class="globalLargeButton" id="__ML_restore_config" onclick="ClickRestoreConfig(document.getElementById('_UI_entered_config_').value)">
+						</td>
+						<td>
+							<form name="RestoreBackupConfig" method="POST" action="/cgi-bin/restore_config" enctype="multipart/form-data" id="uiPostRestoreConfigForm" target="_top">
+								<input type="file" name="Restore_Config" id="_UI_entered_config_" />
+							</form>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+		</div>
+	</body>
+</html>

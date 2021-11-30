@@ -1,0 +1,31 @@
+/* 
+ * style_homepage.css
+ * AirTies		
+ */
+
+p
+{
+	margin: 1em 0px;
+}
+
+.homepageTable
+{
+	margin-top: 0px;
+}
+
+.homepageTable td
+{
+	width: 50%;
+}
+
+.homepageInfoDiv
+{
+	display: block;
+}
+
+.firmware
+{
+	color: green; 
+	font-size: 15px; 
+	font-weight: bold;
+}

@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title>lan_dhcp_client.html</title>
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="EXPIRES" content="-1" />
+		<meta http-equiv="Content-Type" content="text/html; CHARSET=UTF-8" />
+
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+		<link rel="stylesheet" type="text/css" href="/style/style_lan.css" />
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript" src="/js/ui.js"></script>
+		
+		<script type="text/javascript">
+				
+			var obj;
+			
+			function startQuery()
+			{
+				obj = new uiObject();
+				obj.addGet({module: "lan", key: "settings"});
+				obj.addGet({module: "bridge_vlan", key: "settings"});
+				obj.addGet({module: "dhcps", key: "settings"});
+				obj.addQuery({module: "dhcps", key: "lease"});
+				
+				if(getDef("__DEF_HideAdvancedDHCPS") == 0)
+				{
+					obj.addGet({module: "dhcps", key: "clients"});
+				}
+				else
+				{
+					obj.addGet({module: "dhcps", key: "static_ip"});
+				}
+				
+				obj.query();
+				
+				obj.addField({table: "lanList", module: "lan", field: "settings.bridge"});
+				obj.addField({table: "lanList", module: "bridge_vlan", field: "name"});
+				obj.addFilter({table: "lanList", module: "lan", field: "settings.bridge", compareModule: "bridge_vlan", compareField: "name", compareProperty: "inst"});
+				
+				obj.addField({table: "dhcpsList", module: "dhcps", field: "iface"});
+				
+				obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.mac", fieldAlias: "mac"});
+				obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.ip", fieldAlias: "ip"});
+				obj.addField({table: "leaseList", module: "dhcps", field: "lease@counter@.name", fieldAlias: "name"});
+				
+				
+				if(getDef("__DEF_HideAdvancedDHCPS") == 0)
+				{
+					obj.addField({table: "clientList", module: "dhcps", field: "mac@counter@",fieldAlias: "mac"});
+					obj.addField({table: "clientList", module: "dhcps", field: "ip@counter@", fieldAlias: "ip"});
+					obj.addField({table: "clientList", module: "dhcps", field: "hostname@counter@", fieldAlias: "name"});
+				}
+				else
+				{
+					obj.addField({table: "clientList", module: "dhcps", field: "client@counter@.mac"});
+					obj.addField({table: "clientList", module: "dhcps", field: "client@counter@.ip"});
+					obj.addField({table: "clientList", module: "dhcps", field: "client@counter@.name"});
+				}
+						
+				createTable();
+			}
+		
+			function createTable()
+			{	
+				var strDynamicTable = "<table class='marginCenter lanClientListTable globalBorder'><thead>";
+				strDynamicTable += "<tr><th colspan='6' class='textCenter'><span id='__ML_lan_dhcp_dynamic_clients'>Dynamic Addresses</span></th></tr><tr>";
+				strDynamicTable += "<th><span id=\"__ML_lan_dhcp_client_name\">Name</span></th>";
+				strDynamicTable += "<th><span id=\"__ML_lan_dhcp_client_ip\">IP Address</span></th>";
+				strDynamicTable += "<th><span id=\"__ML_lan_dhcp_client_mac\">MAC Address</span></th>";
+				if(__DEF_HideVLANMenu != 1 && __DEF_ShowVLANMenu == 1) strDynamicTable += "<th><span id=\"__ML_vlan_menu \">VLAN</span></th>";
+				strDynamicTable += "<th></th><th></th></tr></thead>";
+				strDynamicTable += "<tbody>";
+				
+				var strStaticTable = "<table class='marginCenter lanClientListTable globalBorder'><thead>";
+				strStaticTable += "</tr><tr><th colspan='6' class='textCenter'><span id='__ML_lan_dhcp_static_clients'>Static Addresses</span></th></tr><tr>";
+				strStaticTable += "<th><span id=\"__ML_lan_dhcp_client_name\">Name</span></th>";
+				strStaticTable += "<th><span id=\"__ML_lan_dhcp_client_ip\">IP Address</span></th>";
+				strStaticTable += "<th><span id=\"__ML_lan_dhcp_client_mac\">MAC Address</span></th>";
+				if(__DEF_HideVLANMenu != 1 && __DEF_ShowVLANMenu == 1) strStaticTable += "<th><span id=\"__ML_vlan_menu \">VLAN</span></th>";
+				strStaticTable += "<th></th><th></th></tr></thead>";
+				strStaticTable += "<tbody>";
+				
+				for (var i = 0; i < obj.tables["leaseList"].length; i++)
+				{
+					var isExist = false;
+					
+					for(var j = 0; j < obj.tables["clientList"].length; j++)
+					{
+						if((obj.tables["leaseList"][i]["dhcps"]["mac"].value == obj.tables["clientList"][j]["dhcps"]["mac"].value) && (obj.tables["leaseList"][i]["dhcps"]["ip"].value == obj.tables["clientList"][j]["dhcps"]["ip"].value) && (obj.tables["leaseList"][i]["dhcps"]["name"].value == obj.tables["clientList"][j]["dhcps"]["name"].value))
+						{
+							isExist = true;
+							break;
+						}
+					}
+					
+					if(isExist) continue;
+					
+					var client = new Object();
+					client.name = obj.tables["leaseList"][i]["dhcps"]["name"].value;
+					client.ip = obj.tables["leaseList"][i]["dhcps"]["ip"].value;
+					client.mac = obj.tables["leaseList"][i]["dhcps"]["mac"].value;
+					client.dhcpsInst = obj.tables["leaseList"][i]["dhcps"]["mac"].inst;
+					
+					for(var j = 0; j < obj.tables["dhcpsList"].length; j++)
+					{
+						if(obj.tables["dhcpsList"][j]["dhcps"]["iface"].inst == client.dhcpsInst)
+						{
+							for(var l = 0; l < obj.tables["lanList"].length; l++)
+							{
+								if(obj.tables["lanList"][l]["lan"]["settings.bridge"].inst == obj.tables["dhcpsList"][j]["dhcps"]["iface"].value)
+								{
+									client.group = obj.tables["lanList"][l]["bridge_vlan"]["name"].value;
+									break;
+								}
+							}	
+						}
+					}
+					
+					var style = "";
+				
+					strDynamicTable += "<tr>";
+		
+					strDynamicTable +="<TD><span id=\"__V_dhcp_dynamic_client_name_" + i + "\">" + client.name + "</span></TD>";
+					strDynamicTable +="<TD><span id=\"__V_dhcp_dynamic_client_ip_" + i + "\">" + client.ip + "</span></TD>";
+					strDynamicTable +="<TD><span id=\"__V_dhcp_dynamic_client_mac_" + i + "\">" + client.mac + "</span></TD>";
+					if(__DEF_HideVLANMenu != 1 && __DEF_ShowVLANMenu == 1) strDynamicTable +="<TD><span id=\"__V_dhcp_dynamic_lease_lan_group_" + i + "\">" + client.group + "</span></TD>";
+					strDynamicTable +="<TD></TD>";
+					strDynamicTable += "<TD align='center'><input type='button' value='" + __ML_lan_dhcp_client_reserve + "' id=\" __V_dhcp_dynamic_client_rezerve_" + i + "\" onclick= \"rezerveClient('"+ client.dhcpsInst +"','"+ client.mac +"','" + client.ip + "','" + client.name + "');\"></TD>";
+					strDynamicTable += "</tr>";
+					
+				}
+				
+				for (var i = 0; i < obj.tables["clientList"].length; i++)
+				{
+					var client = new Object();
+					client.name = obj.tables["clientList"][i]["dhcps"]["name"].value;
+					client.ip = obj.tables["clientList"][i]["dhcps"]["ip"].value;
+					client.mac = obj.tables["clientList"][i]["dhcps"]["mac"].value;
+					client.dhcpsInst = obj.tables["clientList"][i]["dhcps"]["mac"].inst;
+					
+					for(var j = 0; j < obj.tables["dhcpsList"].length; j++)
+					{
+						if(obj.tables["dhcpsList"][j]["dhcps"]["iface"].inst == client.dhcpsInst)
+						{
+							for(var l = 0; l < obj.tables["lanList"].length; l++)
+							{
+								if(obj.tables["lanList"][l]["lan"]["settings.bridge"].inst == obj.tables["dhcpsList"][j]["dhcps"]["iface"].value)
+								{
+									client.group = obj.tables["lanList"][l]["bridge_vlan"]["name"].value;
+									break;
+								}
+							}	
+						}
+					}
+					
+					var style = "";
+				
+					strStaticTable += "<tr>"
+								
+					strStaticTable += "<TD><span id=\"__V_dhcp_static_client_name_" + i + "\">" + client.name + "</span></TD>";
+					strStaticTable += "<TD><span id=\"__V_dhcp_static_client_ip_" + i + "\">" + client.ip + "</span></TD>";
+					strStaticTable += "<TD><span id=\"__V_dhcp_static_client_mac_" + i + "\">" + client.mac + "</span></TD>";
+					if(__DEF_HideVLANMenu != 1 && __DEF_ShowVLANMenu == 1)  strStaticTable += "<TD><span id=\"__V_dhcp_static_lease_lan_group_" + i + "\">" + client.group + "</span></TD>";
+					strStaticTable += "<TD><input type='button' align ='center' value=\"" + __ML_edit + "\" id=\"__V_dhcp_static_client_edit_"+ i +"\" onclick=\"window.location.href='/lan/dhcp_client.html?mac=" + client.mac +"';\" ></TD>";
+					strStaticTable += "<TD class='center'><input type='button' align ='center' value="+ "'" + __ML_delete + "'" + " id=\"__V_dhcp_static_client_delete_"+ i +"\"  onclick= \"deleteClient('"+ client.dhcpsInst +"','"+ client.mac +"');\" ></TD>";
+				
+					strStaticTable += "</tr>";
+					
+				}
+				
+				strStaticTable += "<tr><td class='textRight' colspan='6'><input type='button' onclick=\"window.location.href='/lan/dhcp_client.html';\" value='Yeni' id='__ML_new'</td></tr>";
+				
+				strStaticTable += "</tbody></table>";
+
+				strDynamicTable += "</tbody></table>";
+		
+				$("#table_div").html(strDynamicTable + "" + strStaticTable);
+				showPage();
+			}
+			
+			function checkDynamicToStatic(dhcps_id , mac , ip , name)
+			{
+				for (var i = 0; i < obj.tables["clientList"].length; i++)
+				{
+					if(obj.tables["clientList"][i]["dhcps"]["name"].value == name)
+					{
+						alert(name + " " + getML("__ML_Uniqe_Name").replace("@replace", getML("__ML_lan_dhcp_client_name")));
+						return false;
+					}
+					
+					if(obj.tables["clientList"][i]["dhcps"]["mac"].value == mac)
+					{
+						alert(mac + " " + getML("__ML_Uniqe_Name").replace("@replace", getML("__ML_lan_dhcp_client_mac")));
+						return false;
+					}
+					
+					if(obj.tables["clientList"][i]["dhcps"]["ip"].value == ip)
+					{
+						alert(ip + " " + getML("__ML_Uniqe_Name").replace("@replace", getML("__ML_lan_dhcp_client_ip")));
+						return false;
+					}
+				}
+				return true;
+			}
+			
+			function rezerveClient(dhcps_id , mac , ip , name)
+			{
+				if(!checkDynamicToStatic(dhcps_id , mac , ip , name))
+				{
+					return;
+				}
+				disablePage();
+				
+				beginXML();
+				addCommand("cfgmgr-0", "begin_transaction", dhcps_id);
+				
+				if(getDef("__DEF_HideAdvancedDHCPS") == 0)
+				{
+					addSet(dhcps_id, "add_client", name + "," + mac + "," + ip);
+				}
+				else
+				{
+					addSet(dhcps_id,"add_client", mac + "_" + ip + "_" + name );
+				}		
+				
+				addCommand("cfgmgr-0", "commit", dhcps_id);
+				addCommand("cfgmgr-0", "save", "");
+				addCommand("cfgmgr-0", "end_transaction", dhcps_id);
+				
+				if(getDef("__DEF_HideAdvancedDHCPS") == 0)
+				{
+					addCommand(dhcps_id, "apply","");
+				}
+				else
+				{
+					addCommand(dhcps_id, "apply_static","");
+				}
+				endXML();
+				var fn = redirectPage;
+				sendAJAX(fn);	
+			}
+			
+			function deleteClient(dhcps_id , mac)
+			{
+				disablePage();
+				beginXML();
+				addCommand("cfgmgr-0", "begin_transaction", dhcps_id);
+				addSet(dhcps_id,"del_client", mac);
+				addCommand("cfgmgr-0", "commit", dhcps_id);
+				addCommand("cfgmgr-0", "save", "");
+				addCommand("cfgmgr-0", "end_transaction", dhcps_id);
+				
+				if(getDef("__DEF_HideAdvancedDHCPS") == 0)
+				{
+					addCommand(dhcps_id, "apply","");
+				}
+				else
+				{
+					addCommand(dhcps_id, "apply_static","");
+				}
+				endXML();
+				sendAJAX(deleteClientFromTable);
+			}
+		
+			function deleteClientFromTable()
+			{
+				redirectPage();
+			}
+			
+			function redirectPage()
+			{
+				window.location.href ="/lan/dhcp_clients.html";
+			}
+			
+			$(document).ready(function()
+			{
+				startQuery();
+
+				globalView.addButtonClass();
+				globalView.addRowClass();
+			});
+			
+		</script>
+</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+
+		<div id="contentDiv" style="display:none;" >
+			<div class="textCenter title">
+				<span id="__ML_lan_dhcp_client_list" ml="__ML_lan_dhcp_client_list"></span>
+			</div>
+			<div class="textCenter"><span id="__ML_lan_dhcp_client_info">DHCP Clients can be organized in this list</span></div>
+			<br />
+			<div id="table_div"></div>
+		</div>
+	</body>
+</html>

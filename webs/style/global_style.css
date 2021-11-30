@@ -1,0 +1,151 @@
+/* 
+ * global_style.css
+ * AirTies		
+ */
+
+/*html, body {height: 100%;}*/
+body { color: #000000; }
+thead th {background:#DDDDDD; border-bottom: 1px solid #CCC;}
+tbody tr:nth-child(even) td, tbody tr.even td {background: none;}
+tbody tr.odd td {background:#E6E6E6;}
+ul, ol {margin:0px; padding: 0px;}
+
+#contentDiv
+{
+	background-color: #F2F2F2;
+	padding-bottom: 20px;
+	/*height: 100%;*/
+	min-width: 800px;
+}
+
+#progressbar
+{
+	width: 50%;
+}
+
+.simpleBackground
+{
+  background: none !important;
+}
+
+.title
+{
+	background-color: #444444;
+	color: #FFFFFF;
+	font-weight: bold;
+	font-size:1.2em;
+	line-height:2.2em;
+	margin-bottom: 10px;
+	border-bottom: 1px solid #CCC;
+}
+
+.globalHeaderInfoDiv
+{
+	width: 620px;
+	margin-top: 5px;
+	margin-bottom: 10px;
+}
+
+.globalTable
+{
+	width: 620px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.globalTableSmall
+{
+	width: 350px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.verticalAlignTopTable td
+{
+	vertical-align: top;
+}
+
+.footer
+{
+	margin-top: 10px;
+	margin-right: auto;
+	margin-left: auto;
+	text-align: center;
+}
+
+.globalLargeButton
+{
+	width: 240px;
+}
+
+.hidden
+{
+	display: none;
+}
+
+.marginCenter
+{
+	margin-right: auto;
+	margin-left: auto;
+	text-align: left;
+}
+
+.textCenter
+{
+	text-align: center;
+}
+
+.center
+{
+	text-align: center;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+.textRight
+{
+	text-align:	right;
+}
+
+.widthAuto
+{
+	width: auto !important;
+}
+
+.globalBorder
+{
+	border: 1px solid #CCC;
+}
+
+table td.label, table th.label
+{
+	text-align: left;
+	width: 50%;
+	padding-left: 20px;
+}
+
+table td.labelRight, table th.labelRight
+{
+	text-align: right;
+	width: 50%;
+	padding-left: 20px;
+}
+
+.copyright
+{
+	font-size: 11px;
+	/*display: none;*/
+}
+
+table.withoutPadding th, table.withoutPadding td, table.withoutPadding caption {
+	padding: 0px 10px 0px 0px;
+}
+
+.red {
+	color: #ED1C24;
+}
+
+.green {
+	color: #49B749;
+}
+

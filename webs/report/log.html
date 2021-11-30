@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+	<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+	<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+<html>
+	<head>
+		<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE">
+		<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+		<META HTTP-EQUIV="EXPIRES" CONTENT="-1">
+		<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8">
+		
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+		<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+		
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript">
+		
+		var __V_log="";
+		
+		var max_query = 100;
+		
+			var obj;
+					
+			function startQuery()
+			{
+				obj = new uiObject();
+				obj.addQuery({module: "logger", key: "getlog", value: max_query});
+				
+				obj.query();
+				
+				obj.addField({table: "logs", module: "logger", field: "Log@counter@", fieldAlias: "log"});
+				for(var i = 0; i < obj.tables["logs"].length; i++)
+				{
+					__V_log += " >>> " + obj.tables["logs"][i]["logger"]["log"].value + "<br>";
+				} 
+				showPage();
+			}
+			
+		$(document).ready(function() 
+		{
+			startQuery();
+		});
+		
+		</script>
+	</head>
+	
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+	
+	<div id="contentDiv" style="display:none">
+		<div class="textCenter title">
+			<span id="__ML_system_logs" ml="__ML_system_logs"></span>
+		</div>
+		<div class="center globalHeaderInfoDiv">
+			<span id="__ML_log_intro" ml="__ML_log_intro"></span>
+		</div>
+		<div class="marginCenter globalHeaderInfoDiv">
+			<span id="__V_log"></span>
+		</div>
+	</div>
+	</body>
+</html>

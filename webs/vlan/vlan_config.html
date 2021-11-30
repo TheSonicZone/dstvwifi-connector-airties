@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title></title>
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+		<link rel="stylesheet" type="text/css" href="/style/style_lan.css" />
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+		
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/dlib.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+	
+		<script type="text/javascript">
+	
+	    	var lanInstances = new Array();
+	   		var deletedInstName = "";
+			 
+			var obj;
+				
+			function startQuery()
+			{
+				obj = new uiObject();
+				obj.addGet({module: "bridge_vlan", key: "settings"});
+				obj.addGet({module: "bridge_vlan", key: "ifaces"});
+				obj.addGet({module: "port_vlan", key: "ports"});
+								
+				obj.query();
+						
+				obj.addField({table: "bridgeLan", module: "bridge_vlan", field: "name"});
+				obj.addField({table: "bridgeLan", module: "bridge_vlan", field: "vlanid"});
+						
+				obj.addField({table: "portList", module: "port_vlan", field: "port@counter@.iface", fieldAlias: "iface"});
+				obj.addField({table: "portList", module: "port_vlan", field: "port@counter@.name", fieldAlias: "name"});
+						
+				obj.addField({table: "ifaceList", module: "bridge_vlan", field: "iface@counter@", fieldAlias: "iface"});
+						
+				ResumeCreatePage();
+			}
+			
+			$(document).ready(function()
+			{
+				try
+				{
+					startQuery();
+
+					globalView.addButtonClass();
+					globalView.addRowClass();
+				}
+				catch(ex)
+				{
+					alert(ex);
+				}
+			});
+	
+			function ResumeCreatePage()
+			{try
+			{CreateControls();
+			ShowContent();}
+			catch(ex)
+			{
+				alert(ex);
+			}
+			}
+	
+			function CreateControls()
+			{
+				var tableVlanTbody = '';
+				try{
+					
+					for(var i = 0; i < obj.tables['bridgeLan'].length; i++)
+					{
+						tableVlanTbody += '<tr>';
+						tableVlanTbody += '<td id="td_vlanid_'+ i +'">';
+						tableVlanTbody += '	<span id="span_vlanid_'+ i +'">'+ obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].value +'</span>';
+						tableVlanTbody += '</td>';
+
+						tableVlanTbody += '<td id="td_vlan_name_'+ i +'">';
+						tableVlanTbody += '	<span id="span_vlan_name_'+ i +'">'+ obj.tables['bridgeLan'][i]['bridge_vlan']['name'].value +'</span>';
+						tableVlanTbody += '</td>';
+						
+						tableVlanTbody += '<td id="td_iface_'+ i +'">';
+						
+						var counter = 0;
+						for(var j = 0; j < obj.tables['ifaceList'].length; j++)
+						{
+							if(obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].inst == obj.tables['ifaceList'][j]['bridge_vlan']['iface'].inst)
+							{
+								for(var k = 0; k < obj.tables['portList'].length; k++)
+								{
+									if(obj.tables['ifaceList'][j]['bridge_vlan']['iface'].value == obj.tables['portList'][k]['port_vlan']['iface'].value)
+									{
+										tableVlanTbody += '	<span id="span_'+ i +'_'+ counter +'">'+ obj.tables['portList'][k]['port_vlan']['name'].value +'</span>';
+										tableVlanTbody += '	<br />';
+										counter++;
+									}
+								}
+							}
+						}
+						tableVlanTbody += '</td>';
+
+						tableVlanTbody += '<td id="td_edit_'+ i +'">';
+						tableVlanTbody += '	<input id="__ML_edit" ml="__ML_edit" type="button" onclick="window.location.href=\'/vlan/settings.html?instid='+ obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].inst +'\';" />';
+						tableVlanTbody += '</td>';
+						
+						tableVlanTbody += '<td id="td_delete_'+ i +'">';
+						if(i != 0)
+						{
+							tableVlanTbody += '	<input id="__ML_delete" ml="__ML_delete" type="button" onclick="Delete(\''+ obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].inst +'\')" />';
+						}
+						tableVlanTbody += '</td>';
+						tableVlanTbody += '</tr>';
+					}
+					$("#tableVlanTbody").html(tableVlanTbody);
+				}
+				catch(ex)
+				{
+					alert(ex);
+				}
+			}
+	
+			function parseLanlist()
+			{
+				var i = 0;
+				beginXML();
+				while(true)
+				{
+					lanInstance = getValue("devmgr-0", "lan.inst" + i);
+					if(lanInstance == "")
+					{
+						break;
+					}
+					lanInstances.push(lanInstance);
+					addQuery("devmgr-0", "check_dep", lanInstance);
+					addCommand("cfgmgr-0", "begin_transaction", lanInstance);
+					addGet(lanInstance, "settings");
+					addCommand("cfgmgr-0", "end_transaction", lanInstance);
+	
+					i++;
+				}
+				endXML();
+	
+				sendAJAX(parseVLANNames);
+			}
+	
+			function parseVLANNames()
+			{
+				var check_dep = 0;
+				
+				beginXML();
+	
+				for(var i = 0, lngth = lanInstances.length;  i < lngth ; i++)
+				{
+					bridgeVlan = getValue(lanInstances[i], "settings.bridge");
+					if(bridgeVlan == deletedInstName)
+					{
+						if(getValue("devmgr-0", "check_dep." + lanInstances[i]) == "1")
+						{
+							check_dep = 1;
+							break;
+						}
+						else
+						{
+							addCommand("devmgr-0", "stop_inst", lanInstances[i]);
+							addCommand("devmgr-0", "delete_inst", lanInstances[i]);
+						}
+					}
+				}
+	
+				if(check_dep != 1)
+				{
+					addCommand("devmgr-0", "stop_inst", deletedInstName);
+					addCommand("devmgr-0", "delete_inst", deletedInstName);
+					addCommand("cfgmgr-0", "save", "");
+					endXML();
+					var fn = ReloadPage;
+					sendAJAX(fn);
+				}
+				else
+				{
+					alert(getML("__ML_vlan_config_used_vlan_warning"));
+					ReloadPage();
+				}
+			}
+	
+			function Delete(instName)
+			{
+				disablePage();
+				try
+				{
+					deletedInstName = instName;
+					beginXML();
+					addQuery("devmgr-0", "inst_list", "lan");
+					endXML();
+					sendAJAX(parseLanlist);
+				}
+				catch(e)
+				{
+					ReloadPage();
+				}
+			}
+	
+			function Cancel()
+			{
+				ReloadPage();
+			}
+	
+			function ReloadPage()
+			{
+				window.location.href="/vlan/vlan_config.html";
+			}
+	
+		</script>
+	</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+
+		<div id="contentDiv" style="display:none;" >
+			<div class="textCenter title">
+				<span id="__ML_vlan_status_caption" ml="__ML_vlan_status_caption"></span>
+			</div>
+			<div class="textCenter"><span id="__ML_vlan_status_intro" ml="__ML_vlan_status_intro"></span></div>
+			<br />
+			<table id="table_vlan" class="marginCenter globalTable globalBorder">
+			  <thead>
+			    <tr>
+					<th id="td_vlanid_header" colspan="1">
+						<span id="__ML_vlan_id" ml="__ML_vlan_id">VLAN Id</span>
+			      	</th>
+			      	<th id="td_vlanid_header" colspan="1">
+						<span id="__ML_vlan_name" ml="__ML_vlan_name">VLAN Name</span>
+			      	</th>
+			      	<th id="td_vlan_members" colspan="1">
+						<span id="__ML_vlan_members" ml="__ML_vlan_members">Members</span>
+					</th>
+					<th id="td_edit_header" colspan="1">
+						<span id="span_edit"></span>
+			   	 	</th>
+			      	<th id="td_delete_header" colspan="1">
+						<span id="span_delete"></span>
+			      	</th>
+			    </tr>
+			   </thead>
+			   <tbody id="tableVlanTbody">
+			   
+			   </tbody>
+			  </table>
+			  
+			  <div class="footer">
+			  	<input type="button" id="__ML_new_vlan" ml="__ML_new_vlan" value="New VLAN" onclick="window.location.href='/vlan/settings.html';" />
+			  </div>
+		</div>
+	</body>
+</html>

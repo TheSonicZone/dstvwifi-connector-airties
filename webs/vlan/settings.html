@@ -1,0 +1,504 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title></title>
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+		<link rel="stylesheet" type="text/css" href="/style/style_lan.css" />
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/dlib.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		
+		<script type="text/javascript">
+	
+			parseURI();
+	
+			var instid = "";
+			var lanInstId = "";
+			if(GETDATA["instid"] != undefined)
+			{
+				instid = GETDATA["instid"];
+			}
+	
+			var vlanName = "";
+			var vlanId = "";
+			var no_bridge = "0";
+			var ismgmt = "";
+	
+			var obj;
+	
+			function startQuery()
+			{
+				obj = new uiObject();
+				obj.addGet({module: "bridge_vlan", key: "settings"});
+				obj.addGet({module: "bridge_vlan", key: "ifaces"});
+				obj.addGet({module: "port_vlan", key: "ports"});
+				obj.addGet({module: "port_vlan", key: "free_ports"});
+	
+				obj.query();
+	
+				obj.addField({table: "portList", module: "port_vlan", field: "port@counter@.iface", fieldAlias: "iface"});
+				obj.addField({table: "portList", module: "port_vlan", field: "port@counter@.name", fieldAlias: "name"});
+				obj.addFilter({table: "portList", module: "port_vlan", field: "name", property: "inst", compareType: "equal", compareValue: "port_vlan-0"});
+	
+				obj.addField({table: "freePortList", module: "port_vlan", field: "free_port@counter@.iface", fieldAlias: "iface"});
+				obj.addField({table: "freePortList", module: "port_vlan", field: "free_port@counter@.name", fieldAlias: "name"});
+				obj.addFilter({table: "freePortList", module: "port_vlan", field: "name", property: "inst", compareType: "equal", compareValue: "port_vlan-0"});
+				if(instid != "")
+				{
+					obj.addField({table: "currentVlan", module: "bridge_vlan", field: "vlanid"});
+					obj.addField({table: "currentVlan", module: "bridge_vlan", field: "name"});
+					obj.addField({table: "currentVlan", module: "bridge_vlan", field: "no_bridge"});
+					obj.addField({table: "currentVlan", module: "bridge_vlan", field: "ismgmt"});
+					obj.addFilter({table: "currentVlan", module: "bridge_vlan", field: "vlanid", property: "inst", compareValue: instid});
+					if(obj.tables['currentVlan'][0])
+					{
+						vlanId = obj.tables['currentVlan'][0]['bridge_vlan']['vlanid'].value;
+						vlanName = obj.tables['currentVlan'][0]['bridge_vlan']['name'].value;
+						no_bridge = obj.tables['currentVlan'][0]['bridge_vlan']['no_bridge'].value;
+						ismgmt = obj.tables['currentVlan'][0]['bridge_vlan']['ismgmt'].value;
+					}
+	
+					obj.addField({table: "currentIfaceList", module: "bridge_vlan", field: "iface@counter@", fieldAlias: "iface"});
+					obj.addFilter({table: "currentIfaceList", module: "bridge_vlan", field: "iface", property: "inst", compareValue: instid});
+					obj.addFilter({table: "freePortList", module: "port_vlan", field: "iface", compareType: "not_in", compareTable: "currentIfaceList", compareModule: "bridge_vlan", compareField: "iface", filterOperator: "and", autoApplyFilter: false});
+					obj.applyFilter({table: "freePortList"});
+	
+				}
+	
+				obj.addField({table: "bridgeLan", module: "bridge_vlan", field: "name"});
+				obj.addField({table: "bridgeLan", module: "bridge_vlan", field: "vlanid"});
+	
+				fill_form();
+			}
+	
+			function fill_form()
+			{
+				if(instid != "")
+				{
+					$("#span_vlan_name_value").html(vlanName);
+					$("#span_vlan_id_value").html(vlanId);
+					$("#textbox_vlan_name_value").remove();
+					$("#textbox_vlan_id_value").remove();
+				}
+				else
+				{
+					$("#checkbox_no_bridge_value").removeAttr("disabled");
+					$("#span_vlan_name_value").remove();
+					$("#span_vlan_id_value").remove();
+					$("#textbox_vlan_name_value").val(vlanName);
+					$("#textbox_vlan_id_value").val(vlanId);
+				}
+				$("#span_vlan_name_label").html(__ML_vlan_name);
+				$("#span_vlan_id_label").html(__ML_vlan_id);
+				$("#span_no_bridge_label").html(__ML_vlan_no_bridge);
+				if(no_bridge == "1") $("#checkbox_no_bridge_value").attr("checked", "checked");
+				$("#span_vlanselectable_ports_header").html(__ML_vlan_selectable_ports);
+				$("#span_vlan_member_ports_header").html(__ML_vlan_member_ports);
+				for(var i = 0; i < obj.tables['freePortList'].length; i++)
+				{
+					var temp_option_template = "<option id='@id@' value='@value@'>@text@</option>";
+					temp_option_template = temp_option_template.replace("@id@", "opt_listbox_port_names_" + obj.tables['freePortList'][i]['port_vlan']['iface'].value);
+					temp_option_template = temp_option_template.replace("@value@", obj.tables['freePortList'][i]['port_vlan']['iface'].value);
+					temp_option_template = temp_option_template.replace("@text@", obj.tables['freePortList'][i]['port_vlan']['name'].value);
+					$("#listbox_port_names").append(temp_option_template);
+				}
+				if(instid != "")
+				{
+					for(var i = 0; i < obj.tables['currentIfaceList'].length; i++)
+					{
+						for(var j = 0; j < obj.tables["portList"].length; j++)
+						{
+							if(obj.tables['currentIfaceList'][i]['bridge_vlan']['iface'].value == obj.tables['portList'][j]['port_vlan']['iface'].value)
+							{
+								var temp_option_template = "<option id='@id@' value='@value@'>@text@</option>";
+								temp_option_template = temp_option_template.replace("@id@", "opt_listbox_vlan_iface_names_" + obj.tables['currentIfaceList'][i]['bridge_vlan']['iface'].value);
+								temp_option_template = temp_option_template.replace("@value@", obj.tables['currentIfaceList'][i]['bridge_vlan']['iface'].value);
+								temp_option_template = temp_option_template.replace("@text@", obj.tables['portList'][j]['port_vlan']['name'].value);
+								$("#listbox_vlan_iface_names").append(temp_option_template);
+							}
+						}
+					}
+				}
+				showPage();
+			}
+	
+			$(document).ready(function()
+			{
+				arrangePage();
+				startQuery();
+
+				globalView.addButtonClass();
+				globalView.addRowClass();
+			});
+	
+			function arrangePage()
+			{
+				$("[no_bridge=" + CONFIG_MANAGER_WAN_LAN_BRIDGE + "]").show()
+			}
+	
+			function Add()
+			{
+				var lb = document.getElementById("listbox_port_names");
+				for(var i = 0; i < lb.options.length; i++)
+				{
+					if(lb.options[i].selected)
+					{
+						var lb2 = document.getElementById("listbox_vlan_iface_names");
+						var optn = document.createElement("OPTION");
+						optn.id = lb.options[i].id;
+						optn.text = lb.options[i].text;
+						optn.value = lb.options[i].value;
+						lb2.options.add(optn);
+						lb.removeChild(lb.options[i]);
+						i--;
+					}
+				}
+			}
+	
+			function Remove()
+			{
+				var lb = document.getElementById("listbox_vlan_iface_names");
+				for(var i = 0; i < lb.options.length; i++)
+				{
+					if(lb.options[i].selected)
+					{
+						var lb2 = document.getElementById("listbox_port_names");
+						var optn = document.createElement("OPTION");
+						optn.id = lb.options[i].id;
+						optn.text = lb.options[i].text;
+						optn.value = lb.options[i].value;
+						lb2.options.add(optn);
+						lb.removeChild(lb.options[i]);
+						i--;
+					}
+				}
+			}
+	
+			function pageValidation()
+			{
+				var returnValue = true;
+				var errorMessage = "";
+				if(instid == "")
+				{
+					var regexTest = new RegExp("^([%start_number%-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-5])$".replace("%start_number%", CONFIG_aswconfig_ZERO_VLAN_AVAILABLE ? "0" : "1"));
+					if(!regexTest.test(getValues("textbox_vlan_id_value", "TextBoxObj")))
+					{
+						errorMessage = __ML_vlan_id + __ML_Regex_Msg + "[0-9],%start_number%<=, <=4095] ".replace("%start_number%", CONFIG_aswconfig_ZERO_VLAN_AVAILABLE ? "0" : "1") + getValues("textbox_vlan_id_value", "TextBoxObj") + " " + __ML_Regex_wrong;
+						returnValue = false;
+					}
+	
+					for(var i = 0; i < obj.tables['bridgeLan'].length; i++)
+					{
+						if(obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].value.toUpperCase() == getValues("textbox_vlan_id_value", "TextBoxObj").toUpperCase())
+						{
+							errorMessage = obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].value + " " + __ML_Uniqe_Name.replace("@replace", __ML_vlan_id);
+							returnValue = false;
+						}
+					}
+					if(getValues("textbox_vlan_id_value", "TextBoxObj") == "")
+					{
+						errorMessage = __ML_vlan_id + " " + __ML_Required_Field;
+						returnValue = false;
+					}
+	
+	
+					for(var i = 0; i < obj.tables['bridgeLan'].length; i++)
+					{
+						if(obj.tables['bridgeLan'][i]['bridge_vlan']['name'].value.toUpperCase() == getValues("textbox_vlan_name_value", "TextBoxObj").toUpperCase())
+						{
+							errorMessage = obj.tables['bridgeLan'][i]['bridge_vlan']['name'].value + " " + __ML_Uniqe_Name.replace("@replace", __ML_vlan_name);
+							returnValue = false;
+						}
+					}
+					if(getValues("textbox_vlan_name_value", "TextBoxObj") == "")
+					{
+						errorMessage = __ML_vlan_name + " " + __ML_Required_Field;
+						returnValue = false;
+					}
+				}
+				if($("#listbox_vlan_iface_names option").length == 0)
+				{
+					errorMessage = __ML_bridge_vlan_you_must_select_at_least_one_member_port;
+					returnValue = false;
+				}
+				if(!returnValue) alert(errorMessage);
+				return returnValue;
+			}
+	
+	
+	
+			function send_is_valid_vlan_id()
+			{
+				var tmp_vlan_id = $("#textbox_vlan_id_value").val();
+				beginXML();
+				addQuery("bridge_vlan-0", "validVLAN", tmp_vlan_id);
+				endXML();
+				sendAJAX(parse_is_valid_vlan_id);
+			}
+	
+			function parse_is_valid_vlan_id()
+			{
+	
+				var result = getValue("bridge_vlan-0", "validVLAN") == "true" ? true : false;
+				if(result)
+				{
+					Save2();
+				}
+				else
+				{
+					showPage();
+					alert(__ML_vlan_id_conflict_message);
+				}
+			}
+	
+			function reboot()
+			{
+				alert(__ML_RequiresReboot);
+	        		top.location.href="/tools/wait_reboot.html?status_modem=restart_modem";
+			}
+	
+			function Save()
+			{
+				if(pageValidation())
+				{
+				disablePage();
+					if(instid == "")
+					{
+						send_is_valid_vlan_id();
+					}
+					else
+					{
+						Save2();
+					}
+				}
+			}
+	
+			function Save2()
+			{
+				if(instid == "")
+				{
+					beginXML();
+					addCommand("devmgr-0", "create_inst", "bridge_vlan");
+					endXML();
+					var fn = ParseCreateInst;
+					sendAJAX(fn);
+				}
+				else
+				{
+					SaveBridgeVlan();
+				}
+			}
+	
+			function ParseCreateInst()
+			{
+				instid = getValue("devmgr-0", "create_inst.bridge_vlan");
+				beginXML();
+				addCommand("cfgmgr-0", "commit", instid);
+				addCommand("cfgmgr-0", "save", "");
+				addCommand("devmgr-0", "start_inst", instid);
+				endXML();
+				var fn = SaveBridgeVlan;
+				sendAJAX(fn);
+			}
+	
+			function SaveBridgeVlan()
+			{
+				try{
+					beginXML();
+					addCommand("cfgmgr-0", "begin_transaction", instid);
+					if(document.getElementById("textbox_vlan_id_value") != null) addSet(instid, "vlanid", getValues("textbox_vlan_id_value", "TextBoxObj"));
+					if(document.getElementById("textbox_vlan_name_value") != null) addSet(instid, "name", getValues("textbox_vlan_name_value", "TextBoxObj"));
+					if(CONFIG_MANAGER_WAN_LAN_BRIDGE == 1) addSet(instid, "no_bridge", $("#checkbox_no_bridge_value").is(":checked") ? "1" : "0");
+	
+					var lb = document.getElementById("listbox_vlan_iface_names");
+	
+					var addList = new Array();
+					var removeList = new Array();
+	
+					if(obj.tables['currentIfaceList'])
+					{
+						for(var i = 0; i < obj.tables['currentIfaceList'].length; i++)
+						{
+							var removed = true;
+	
+							for(var j = 0; j < lb.options.length; j++)
+							{
+								if(obj.tables['currentIfaceList'][i]['bridge_vlan']['iface'].value == lb.options[j].value)
+								{
+									removed = false;
+									break;
+								}
+							}
+	
+							if(removed) removeList.push(obj.tables['currentIfaceList'][i]['bridge_vlan']['iface'].value);
+						}
+					}
+	
+					for(var i = 0; i < lb.options.length; i++)
+					{
+						var added = true;
+	
+						if(obj.tables['currentIfaceList'])
+						{
+							for(var j = 0; j < obj.tables['currentIfaceList'].length; j++)
+							{
+								if(obj.tables['currentIfaceList'][j]['bridge_vlan']['iface'].value == lb.options[i].value)
+								{
+									added = false;
+									break;
+								}
+							}
+						}
+						if(added) addList.push(lb.options[i].value);
+					}
+	
+					if(addList.length + removeList.length > 0)
+					{
+						for(var i = 0; i < addList.length; i++)
+						{
+							addSet(instid, "addIface", addList[i]);
+						}
+						for(var i = 0; i < removeList.length; i++)
+						{
+							addSet(instid, "delIface", removeList[i]);
+						}
+					}
+	
+					addCommand("cfgmgr-0", "commit", instid);
+					addCommand("cfgmgr-0", "save", "");
+					addCommand("cfgmgr-0", "end_transaction", instid);
+					if(lanInstId != "")
+					{
+						addCommand("cfgmgr-0", "begin_transaction", lanInstId);
+						addSet(lanInstId, "bridge", instid);
+						addCommand("cfgmgr-0", "commit", lanInstId);
+						addCommand("cfgmgr-0", "save", "");
+						addCommand("cfgmgr-0", "end_transaction", lanInstId);
+					}
+	/*				addCommand(instid, "apply");
+					if(lanInstId != "")
+					{
+						addCommand(lanInstId, "apply");
+					}
+	*/
+					endXML();
+					var fn = reboot;
+					sendAJAX(fn);
+	
+				}catch(ex){alert(ex);}
+			}
+	
+			function Cancel()
+			{
+				ReloadPage();
+			}
+	
+			function ReloadPage()
+			{
+				window.location.href="/vlan/vlan_config.html";
+			}
+	
+		</script>
+		
+		</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		
+		<div id="contentDiv" style="display:none">
+			<div class="textCenter title">
+				<span id="__ML_vlan_configuration" ml="__ML_vlan_configuration"></span>
+			</div>
+			<div no_bridge="0" style="display: none;" class="marginCenter globalHeaderInfoDiv"><span id="__ML_vlan_configuration_intro"></span></div>
+			<div no_bridge="1" style="display: none;" class="marginCenter globalHeaderInfoDiv"><span id="__ML_vlan_configuration_no_bridge_intro"></span></div>
+			<br />
+			<table class="marginCenter lanVlanSettingsInfoTable globalBorder">
+				<tr>
+					<td>
+						<span id="span_vlan_name_label"></span>
+					</td>
+					<td>
+						<span id="span_vlan_name_value"></span>
+						<input id="textbox_vlan_name_value" type="text"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span id="span_vlan_id_label"></span>
+					</td>
+					<td>
+						<span id="span_vlan_id_value"></span>
+						<input id="textbox_vlan_id_value" type="text"/>
+					</td>
+				</tr>
+				<tr no_bridge="1" style="display: none;">
+					<td>
+						<span id="span_no_bridge_label"></span>
+					</td>
+					<td>
+						<input id="checkbox_no_bridge_value" type="checkbox" disabled="true" />
+					</td>
+				</tr>
+			</table>
+			<table class="marginCenter globalTable globalBorder">
+				<thead>
+					<tr>
+						<th class="textRight">
+							<span id="span_vlanselectable_ports_header"></span>
+						</th>
+						<th>
+							<span id="span_vlan_member_ports_header"></span>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="textRight">
+							<select id="listbox_port_names" size="10" style="width: 130px;" multiple="true">
+							</select>
+						</td>
+						<td>
+							<select id="listbox_vlan_iface_names" size="10" style="width: 130px;" multiple="true"></select>
+						</td>
+					</tr>
+					<tr>
+						<td class="textRight">
+							<input id="button_remove" type="button" value="<<" onclick="Remove();" class="inputButton" />
+						</td>
+						<td>
+							<input id="button_add" type="button" value=">>" onclick="Add();" class="inputButton" />
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="footer">
+				<input type="button" name="ClickSave" value="Save" id="__ML_save" onclick="Save()" />
+				<input type="button" name="" value="Cancel" id="__ML_cancel" onclick="Cancel()" />
+			</div>
+		</div>
+	</body>
+</html>

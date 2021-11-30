@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+<html>
+	<head>
+		<title>Airties</title>
+		<meta http-equiv="PRAGMA" CONTENT="NO-CACHE"/>
+		<meta http-equiv="Cache-control" CONTENT="NO-CACHE"/>
+		<meta http-equiv="EXPIRES" CONTENT="-1"/>
+		<meta http-equiv="Content-Type" CONTENT="text/html; CHARSET=UTF-8"/>
+		
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/global/global.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript">
+			    if (top.frames.length!=0)
+			    top.location=self.document.location;
+		</script>
+
+		<script type="text/javascript">
+			document.title = "AirTies " + __DEF_BuildProfile;
+			if (top.frames.length!=0)
+			top.location=self.document.location;
+			$(document).ready(function() {
+				global.parseQueryString();
+				if (global.GETDATA["defaultOpMode"] != undefined) {
+					$("#mainFrame").attr("src", $("#mainFrame").attr("src") + "&defaultOpMode=" + global.GETDATA["defaultOpMode"]);
+				}
+			});
+		</script>
+
+	</head>
+	<frameset rows="115,*" frameborder="NO" border="0" framespacing="0">
+		<frame src="/top.html" name="topFrame" scrolling="NO" noresize/>
+		<frame id="mainFrame" src="settings_new.html?view=quicksetup" name="mainFrame"/>
+	</frameset>
+	<noframes>
+		<body></body>
+	</noframes>
+</html>
+

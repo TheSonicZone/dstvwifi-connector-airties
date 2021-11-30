@@ -1,0 +1,220 @@
+table{
+	margin-bottom: 0px;
+}
+
+.wirelessSettingsTopDiv{
+	min-width: 800px;
+}
+
+.wirelessMeshTopDiv{
+	width: 85%;
+	min-width: 600px;
+}
+
+.wirelessMacTopDiv{
+	width: 85%;
+	min-width: 600px;
+}
+
+.wirelessWpsTopDiv{
+	width: 85%;
+	min-width: 600px;
+}
+
+div.wirelessMacDiv {
+	width: 100%;
+	margin-right: auto;
+	margin-left: auto;
+	margin-bottom: 10px;
+}
+
+div.connectedClients {
+	width: 100%;
+	margin-right: auto;
+	margin-left: auto;
+	margin-bottom: 10px;
+}
+
+table.wirelessStatusApsTable {
+	width: 700px;
+	margin-top: auto;
+	margin-right: auto;
+	margin-bottom: auto;
+	margin-left: auto;
+	padding: 10px;
+	border: none;
+	table-layout:fixed;
+	overflow:hidden;
+	white-space: nowrap;
+}
+
+table.wirelessStatusApsTable td.ssid {
+	width: 40%;
+	overflow:hidden;
+}
+
+table.wirelessStatusApsTable td.security {
+	width: 35%;
+}
+
+table.wirelessStatusApsTable td.status {
+	width: 25%;
+}
+
+table.wirelessStatusApsTable table {
+	width: 100%;
+}
+
+table.wirelessStatusApsTable table.colored {
+	background-color: #DDDDDD;
+}
+
+table.wirelessStatusApsStationsTable {
+	table-layout:fixed;
+	overflow:hidden;
+	white-space: nowrap;
+}
+
+table.wirelessStatusApsStationsTable td.mac {
+	width: 35%;
+}
+
+table.wirelessStatusApsStationsTable td.name {
+	width: 30%;
+	overflow:hidden;
+}
+
+table.wirelessStatusApsStationsTable td.rate {
+	width: 15%;
+}
+
+table.wirelessStatusApsStationsTable td.rssi {
+	width: 20%;
+}
+
+table.wirelessMacTable {
+	width: 570px;
+	margin-top: auto;
+	margin-right: auto;
+	margin-bottom: auto;
+	margin-left: auto;
+	border: none;
+	table-layout:fixed;
+	overflow:hidden;
+	white-space: nowrap;
+}
+
+table.wirelessMacTable td {
+	background: none !important;
+}
+
+table.wirelessMacTable td.buttons {
+	text-align: center;
+	padding-top: 12px;
+	width: 150px;
+}
+
+table.wirelessMacTable td.macInputs {
+	width: 210px;
+}
+
+ul.wirelessMacFilterTypeUl {
+	margin-right: auto;
+	margin-left: auto;
+	text-align: left;
+	width:50%;
+}
+
+input.wirelessMacNewAddr {
+	width: 200px;
+}
+
+select.wirelessMacClientList {
+	width: 200px;
+}
+
+select.wirelessMacExistingMacAddr {
+	width: 200px;
+}
+
+table.wirelessMeshApTable td {
+	padding-bottom: 3px;
+}
+
+div.wirelessMeshApTableDiv {
+	height: 250px;
+	overflow: auto; 
+	margin: auto;
+	padding: 1px;
+}
+
+.commentStyle2 {
+	padding-top: 10px; 
+	padding-bottom: 10px;
+}
+
+.wirelessSettingsOpModeTable {
+	width: 300px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.wirelessSettingsTopTable {
+	width: 400px;
+	margin-bottom: 10px;
+}
+
+.wirelessSettingsTopTable td {
+	width: 50%;
+}
+
+.wirelessSettingsTopTable select {
+	width: 125px;
+}
+
+.wirelessSettingsApTableDiv {
+	position: relative; /* Workaround for a JQuery-ui bug that buttons don't move in scrolling div without this in IE8 */
+	max-height: 400px;
+	width: 770px;
+	overflow: auto; 
+	margin: auto;
+}
+
+.wirelessSettingsBridgeModeApTable {
+	width: 750px;
+	margin-bottom: 10px;
+}
+
+.wirelessSettingsBridgeModeApTable td .statusx {
+	width:200px;
+}
+
+.wirelessSecuritySettingsTable {
+	width: auto;
+}
+
+table.wirelessSecuritySettingsTable td.labelRight, table.wirelessSecuritySettingsTable th.labelRight {
+	width: auto !important;
+}
+
+div.wirelessWpsNotice {
+	margin-top: 10px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.staConnectionStatus_connected {
+	color:#4bbb74;	
+}
+
+.staConnectionStatus_disconnected, .staConnectionStatus_disconnected_wrong_password, .staConnectionStatus_disconnected_not_found, .staConnectionStatus_disconnected_wrong_sec_type {
+	color:#f1425e;
+}
+
+.apListSsid {
+	text-decoration: underline;
+}
+
+.apListApRow {
+	cursor: pointer;
+}

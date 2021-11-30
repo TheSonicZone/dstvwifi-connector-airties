@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+<head>
+	<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="EXPIRES" CONTENT="-1">
+	<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8">
+	
+	<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+	<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+	<!--[if lt IE 8]>
+	  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+	<![endif]-->
+	<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+	
+	<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+	<script type="text/javascript" src="/js/jquery.js"></script>
+	<script type="text/javascript" src="/js/jquery-ui.js"></script>
+	
+	<script type="text/javascript" src="/js/ui.js"></script>
+	<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+	<script type="text/javascript" src="/js/Definitions.js"></script>
+	<script type="text/javascript" language="javascript" >
+	
+	parseURI();
+	
+	var delay_time = 60000;
+	var progress_bar_update_rate = 10;
+	var start = new Date();
+	
+	var reboot_texts;
+	
+	var __ML_page_title;
+	var __ML_page_caption;
+	var __ML_prgBar;
+	var __ML_pls_wait;
+	
+	var status_modem2 = GETDATA["status_modem"];
+	var redirectIp = GETDATA["redirectIp"];
+	if(GETDATA["firmwareUpgrade"] == 1)
+	{
+		delay_time = __DEF_firmware_upgrade_reboot_duration;
+	}
+	else
+	{
+		delay_time = __DEF_reboot_duration;
+	}
+	
+	if (status_modem2 == "restart_modem")
+	{
+	    __ML_page_title = __ML_str_caption;
+	    __ML_page_caption = __ML_rebooting;
+	    __ML_prgBar = __ML_progress;
+	    __ML_pls_wait = __ML_wait;
+	}
+	else if (status_modem2 == "fact_modem")
+	{
+	    __ML_page_title = __ML_fact_caption;
+	    __ML_page_caption = __ML_factory;
+	    __ML_prgBar = __ML_progress;
+	    __ML_pls_wait = __ML_pl_wait;
+	}
+	else
+	{
+	}
+	
+	$(document).ready(function()
+	{
+		Init();
+	});
+
+	function ManageReboot()
+	{
+	    if (status_modem2 == "restart_modem")
+	    {
+	          send_reboot_query();
+	    }
+	    else if (status_modem2 == "fact_modem")
+	    {
+	         send_defaults_query();
+	    }
+	}
+	
+	function send_reboot_query()
+	{
+	    beginXML();
+	    addCommand("sysmgr-0","reboot","");
+	    endXML();
+	    var fn = parse_reboot_response;
+	    $.ajaxSetup({
+	      timeout: 2000
+	    });
+	    sendAJAX(fn);
+	}
+	
+	function parse_reboot_response()
+	{
+	    //top.location.href="/tools/wait_reboot.html";
+	}
+	
+	function send_defaults_query()
+	{
+	    beginXML();
+	    addCommand("cfgmgr-0","factory_default","");
+	    addCommand("sysmgr-0","reboot","");
+	    endXML();
+	    var fn = parse_defaults_response;
+	    $.ajaxSetup({
+	      timeout: 2000
+	    });
+	    sendAJAX(fn);
+	}
+	
+	function parse_defaults_response()
+	{
+	    //top.location.href="/tools/wait_reboot.html";
+	}
+	
+	function Init()
+	{
+		$("#progressbar").progressbar({
+		    max: 100
+		});
+
+		ManageReboot();
+		
+		if (window.frames.length > 0)
+		{
+			window.location.href = self.location.href;
+		}
+		else
+		{
+			updateProgress();
+		}
+	    
+		showPage();
+	}
+
+	function updateProgress()
+	{
+		$("#progressbar").data("progress", setInterval(function() {
+			var elapsed_time = (new Date().getTime() - start.getTime());
+		  	if(elapsed_time > delay_time) {
+		  		$("#progressbar").progressbar( { value: 100 } );
+		    	clearInterval($("#progressbar").data("progress")); //Stop updating
+				if(redirectIp != "" && redirectIp != undefined)
+				{
+					window.location.href= "http://" + redirectIp + "/login.html";
+				}
+				else
+				{
+					window.location.href= "/login.html";
+				}
+		  	}
+		  $("#progressbar").progressbar( { value: (100*elapsed_time/delay_time) } );
+		}, progress_bar_update_rate));
+	}
+
+	</script>
+
+</head>
+
+<body class="simpleBackground">
+	<div id="waitDiv" class="center">
+		<p>
+			<script language="javascript">document.write(__ML_please_wait);</script>
+		</p>
+		<img src="/images/ajax-loader.gif"/>
+	</div>
+	<div id="contentDiv">
+	  <input type=hidden id="__ML_str_caption" />
+	  <input type=hidden id="__ML_fact_caption" />
+	  <form method="post" onSubmit="return false" class="menustyle">
+	    <BR>
+		<div class="center">
+	          <span if="__ML_page_caption" class="large">
+	          </span>
+		</div>
+		<table id="uiTable1" class="marginCenter">
+		    <tr>
+		        <td colspan="2" class="textCenter">
+		                <strong><span id="__ML_progress">Progress</span></strong>
+		        </td>
+		    </tr>
+		
+		    <tr>
+		     <td colspan="2" class="textCenter">
+		        <div id="progressbar" class="marginCenter"></div>
+		     </td>
+		    </tr>
+		
+		    <tr>
+		        <td colspan="2" class="textCenter">
+	               	<span id="__ML_pl_wait">Please Wait</span>
+		        </td>
+		    </tr>
+		
+		</table>
+	  </form>
+	</div>
+</body>
+</html>

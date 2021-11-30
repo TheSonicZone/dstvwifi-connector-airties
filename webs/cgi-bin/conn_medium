@@ -1,0 +1,96 @@
+#!/bin/sh
+
+exe_name=`echo ${0##*/}`
+
+#. /usr/bin/debug.sh
+
+debug_level=0
+
+#. /usr/bin/config.sh
+
+resp_type="onlyresp"
+try_val="try 5"
+req_val=$exe_name
+
+ret_error()
+{
+	echo "{"
+	echo "\"error\" : \"$1\""
+	echo "}"
+	exit
+}
+
+echo "Content-type: application/json"
+echo ""
+
+# echo "CONTENT_TYPE:$CONTENT_TYPE"
+# echo "CONTENT_LENGTH:$CONTENT_LENGTH"
+# echo "REQUEST_METHOD:$REQUEST_METHOD"
+# echo "QUERY_STRING_POST:$QUERY_STRING_POST"
+# echo "QUERY_STRING:$QUERY_STRING"
+
+[ ! -f /var/http_client_ip ] && {
+	ret_error 1
+}
+
+is_old_wireless=`cli query devmgr-0:mngr_list | grep -c wireless_ap`
+
+#
+# Update /proc/net/arp
+#
+arp -a > /dev/null 2>&1
+
+http_client_ip=`cat /var/http_client_ip`
+[ ! -n "$http_client_ip" ] && {
+	ret_error 2
+}
+
+mac_regex="[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]"
+http_client_mac=`cat /proc/net/arp | grep "$http_client_ip" | grep -o -i "$mac_regex"`
+[ ! -n "$http_client_mac" ] && {
+	ret_error 3
+}
+
+#echo "http_client_mac:$http_client_mac"
+
+[ "$is_old_wireless" = "1" ] && {
+	for wi in `echo "wireless_ap-0 wireless_ap-1 wireless_ap-2 wireless_ap-3"`
+	do
+		wireless_mac=`cli query ${wi}:sta_list | grep -i -c "$http_client_mac"`
+#		echo "wi:$wi wireless_mac:$wireless_mac"
+		[ "$wireless_mac" = "1" ] && {
+			break
+		}
+	done
+} || {
+	wireless_list=`cli query devmgr-0:inst_list wireless | grep -o wireless-[0-9]`
+#	echo "wireless_list:$wireless_list"
+	for wi in `echo "$wireless_list"`
+	do
+		for ai in `echo "ap0 ap1 ap2 ap3"`
+		do
+			wireless_mac=`cli query $wi:${ai}_sta_list | grep -i -c "$http_client_mac"`
+#			echo "wi:$wi ai:$ai wireless_mac:$wireless_mac"
+			[ "$wireless_mac" = "1" ] && {
+				break
+			}
+		done
+		[ "$wireless_mac" = "1" ] && {
+			break
+		}
+	done
+}
+
+echo ""
+
+echo "{"
+echo "\"conn_medium\" : {"
+
+[ "$wireless_mac" = "1" ] && {
+	echo "\"type\" : \"wireless\""
+} || {
+	echo "\"type\" : \"wired\""
+}
+
+echo "}"
+echo "}"

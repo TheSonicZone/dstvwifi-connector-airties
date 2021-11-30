@@ -1,0 +1,61 @@
+#quickSetupTopDiv{
+	text-align: left;
+	font-weight: normal;
+	text-transform: none;
+	margin-bottom: 10px;
+	width: 480px;
+	position:relative;
+	background-color: white;
+	padding-top: 0px;
+	border-spacing: 0;
+}
+
+#quickSetupTopDiv tbody tr.even td {background:none;}
+#quickSetupTopDiv tbody tr.odd td {background:none;}
+
+a.mover                             { background: #555; padding: 6px 12px; position: absolute; color: #FFF;
+                                      font-weight: bold; text-decoration: none; }
+.next-tab                             { bottom: 0; right: 0; -moz-border-radius-topleft: 10px; -webkit-border-top-left-radius: 10px; }
+.save-tab                             { bottom: 0; right: 0; -moz-border-radius-topleft: 10px; -webkit-border-top-left-radius: 10px; }
+.prev-tab                             { bottom: 0; left: 0; -moz-border-radius-topright: 10px; -webkit-border-top-right-radius: 10px; }
+
+#quickSetupWirelessSettingsDiv table td
+{
+	margin: 0px;
+	padding: 0px;
+}
+
+.quickSetupManagerTab
+{
+	height: 170px;
+	overflow: hidden;
+}
+
+.quickSetupButtons
+{
+	position: absolute; 
+	bottom: 1px; 
+	left: 40%;
+	width: 300px;
+	margin-bottom: 0px;
+}
+
+.wizardTable
+{
+	width: 480px;
+	border: 1px solid #CCC;
+}
+
+.wizardTable td
+{
+	width: 50%;
+}
+
+.saveMessage
+{
+	color : red; 
+	font-size : 12pt; 
+	font-weight : bold; 
+	text-align : center; 
+	margin-top:10px;
+}

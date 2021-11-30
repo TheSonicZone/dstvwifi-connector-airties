@@ -1,0 +1,393 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+<title>Menu Frame</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Cache-control" content="NO-CACHE" />
+<meta http-equiv="PRAGMA" content="NO-CACHE" />
+<meta http-equiv="EXPIRES" content="-1"/>
+
+<link href="/style/style_menu.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/ui.js"></script>
+<script language="JavaScript" src="/js/atmenu.js" type="text/javascript"></script>
+<script type="text/javascript" src="/js/Definitions.js"></script>
+
+<script type="text/javascript">
+	var GETDATA = new Array();
+	parseURI();
+
+	$(document).ready(function()
+	{
+      	$("a").click(function(el){
+			if($($(this).parents().get(2)).attr("id") == "menuContainer")
+			{
+				$("#menuContainer .active").toggleClass("active");
+				$($(this).parents().get(0)).toggleClass("active");
+				$(this).next("ul.submenu").show();
+
+				if($($(this).parents().get(0)).children("ul").children("li:visible").size() > 1 || __DEF_ShowMenuItemInSubmenu == 0)
+				{
+					$(this).toggleClass("active");
+					$(this).next("ul").children(":visible:first").toggleClass("active");
+				}
+				else
+				{
+					$(this).next("ul").hide();
+				}
+			}
+			else
+			{
+				$(this).closest(".submenu").children().removeClass("active");
+				$(this).closest("li").toggleClass("active");
+			}
+      	});
+
+      	HideMenuItems();
+
+      	if (GETDATA["wirelessMode"] == "sta")
+      	{
+      		HideMenuItem("wireless_menu");
+      		ShowMenuItem("wireless_menu_sta");
+      	}
+
+      	showPage({addProductImage:false});
+
+		//if(__DEF_HideInternetMenu)
+			//$("#__ML_quick_setup_menu").html(getML("__ML_wireless") + " " + getML("__ML_quick_setup_menu"));
+		if (window.__DEF_wireless_menu_target_is_settings) {
+			var settingsPageHref = $("#__ML_wireless_setup").parent().hide().prop("href");
+			$("#wireless_menu").find("a.menuTitle").prop("href", settingsPageHref);
+		}
+		if(window.__DEF_alternateQuickSetup){
+			$("#quicksetup_menu a").prop("href", __DEF_alternateQuickSetup);
+		}
+		
+	});
+
+	function HideMenuItems()
+	{
+		try{if(__DEF_HideHomepageMenu != 1) ShowMenuItem("homepage_menu");}catch(ex){}
+		try{if(__DEF_HideMediaServerMenu != 1) ShowMenuItem("media_server_menu");}catch(ex){}
+		try{if(__DEF_HideRouteMenu != 1) ShowMenuItem("route_menu");}catch(ex){}
+		try{if(__DEF_HideQuickSetup != 1) ShowMenuItem("quicksetup_menu");}catch(ex){}
+		try{if(__DEF_HideRouteAPSelection != 1) ShowMenuItem("routerApSelection");}catch(ex){}
+		try{if(__DEF_ADSLDisabled != 1) ShowMenuItem("internet_advanced");}catch(ex){}
+		try{if(getDef("__DEF_ShowVoipAccountsPage") == 1) ShowMenuItem("voip_accounts_page");}catch(ex){}
+		try{if(getDef("__DEF_ShowVoipCallFeatureSettingsPage") == 1) ShowMenuItem("voip_call_feature_settings_page");}catch(ex){}
+		try{if(getDef("__DEF_ShowVoipCallHistoryPage") == 1) ShowMenuItem("voip_call_history_page");}catch(ex){}
+		try{if(getDef("__DEF_ShowVoipDialPlanPage") == 1) ShowMenuItem("voip_dail_plan_page");}catch(ex){}
+		try{if(getDef("__DEF_ShowVoipIncomingOutgoingCallSettingsPage") == 1) ShowMenuItem("voip_IncomingOutgoingCallSettings_page");}catch(ex){}
+		try{if(getDef("__DEF_ShowVoipAdvancedSettingsPage") == 1) ShowMenuItem("voip_advanced_settings_page");}catch(ex){}
+		try{if(__DEF_HideUpnpMenu != 1) ShowMenuItem("upnp_menu");}catch(ex){}
+		try{if(__DEF_HideVLANMenu != 1 && __DEF_ShowVLANMenu == 1) ShowMenuItem("port_settings_menu");}catch(ex){}
+		try{if(__DEF_HideVLANMenu != 1 && __DEF_ShowVLANMenu == 1) ShowMenuItem("vlan_config_menu");}catch(ex){}
+		try{if(__DEF_HideIGMPMenu != 1) ShowMenuItem("igmp_menu");}catch(ex){}
+		try{if(__DEF_HideADSLMenu != 1) ShowMenuItem("adsl_menu");}catch(ex){}
+		try{if(__DEF_HideInternetMenu != 1) ShowMenuItem("internet_menu");}catch(ex){}
+		try{if(__DEF_showTr069Menu != 0)  ShowMenuItem("management_tr069_menu");}catch(ex){}
+		try{if(__DEF_HideSNMPMenu != 1) ShowMenuItem("management_snmp_menu");}catch(ex){}
+		try{if(__DEF_HideDDNSMenu != 1) ShowMenuItem("ddns_menu");}catch(ex){}
+		try{if(__DEF_HideWirelessMenu != 1) ShowMenuItem("wireless_menu");}catch(ex){}
+		try{if(__DEF_WirelessHideWirelessSecurity == 1) HideMenuItem("menu_wireless_security");}catch(ex){}
+		try{if(__DEF_WirelessHideWirelessMacFiltering == 1) HideMenuItem("menu_wireless_mac_filtering");}catch(ex){}
+		try{if(__DEF_WirelessHideWirelessMesh == 1) HideMenuItem("menu_wireless_mesh");}catch(ex){}
+		try{if(__DEF_QosDisabled != 1) ShowMenuItem("qos_menu");}catch(ex){}
+		try{if(__DEF_HideRouteDynamicRipMenu != 1) ShowMenuItem("route_dynamic_rip_menu");}catch(ex){}
+			var firewallMenuHasChild = false;
+		try{if(__DEF_HideAccessCtrlMenu != 1) { ShowMenuItem("firewall_access_control_menu");	 firewallMenuHasChild = true; }}catch(ex){}
+		try{if(__DEF_HideMACFilterMenu != 1) { ShowMenuItem("firewall_mac_filter_menu");  firewallMenuHasChild = true; }}catch(ex){}
+		try{if(__DEF_HideURLFilteringMenu != 1) { ShowMenuItem("firewall_url_filter_menu"); firewallMenuHasChild = true; }}catch(ex){}
+		try{if(__DEF_HideAntiDOSMenu != 1) { ShowMenuItem("firewall_anti_dos_menu"); firewallMenuHasChild = true; }}catch(ex){}
+		try{if(firewallMenuHasChild) ShowMenuItem("firewall_menu");}catch(ex){}
+			var natMenuHasChild = false;
+		try{if(__DEF_HidePortFwdMenu != 1) { ShowMenuItem("nat_port_fw_menu");	natMenuHasChild = true; }}catch(ex){}
+		try{if(__DEF_HideDMZMenu != 1) { ShowMenuItem("nat_dmz_menu");	 natMenuHasChild = true; }}catch(ex){}
+		try{if(natMenuHasChild) {ShowMenuItem("nat_menu"); ShowMenuItem("port_fw_menu");}}catch(ex){}
+		try{if(__DEF_HideRemoteMngtMenu != 1) ShowMenuItem("management_remote_management_menu");}catch(ex){}
+		try{if(__DEF_HideVoipMenu != 1) ShowMenuItem("voip_menu");}catch(ex){}
+		try{if(__DEF_HideRouteWan2Vlan != 1) ShowMenuItem("route_wlan_to_vlan_menu");}catch(ex){}
+		if(getDef("__DEF_MacCloningEnabled") == 1) ShowMenuItem("internet_mac_cloning");
+		if(getDef("__DEF_Hide3G") != 1) ShowMenuItem("3g");
+		if(getDef("__DEF_show_upnp_settings_menu") == "1") ShowMenuItem("upnp_settings_menu");
+      	if(__DEF_HideAdvancedDHCPS != 1) {
+        	ShowMenuItem("advanced_dhcps");
+      	}
+		else
+		{
+			ShowMenuItem("old_dhcps")
+		}
+    	try{if(__DEF_HideUsb_Menu != 1) ShowMenuItem("usb_menu");}catch(ex){}
+    	try{if(!__DEF_HideLan_Menu) ShowMenuItem("lan_menu");}catch(ex){}
+		try{if(__DEF_HideLanClientList == 1) { HideMenuItem("lan_client_list_menu"); $("#lan_client_list_menu_caption").attr("href", "/lan/ip_and_dhcp_settings.html").attr("target", "mainFrame"); }}catch(ex){}
+		try{if(__DEF_ShowMenuLogoutItem == 1) { ShowMenuItem("menu_logout"); }}catch(ex){}
+		try{if(__DEF_ShowMenuItemInSubmenu != 1) { $(".sameAsMenuTitle").hide(); }}catch(ex){}
+		
+		try{if(__DEF_ShowMenuWirelessWps != 1) HideMenuItem("menu_wireless_wps"); }catch(ex){}
+		try{if(__DEF_HideToolsTimeSettingsMenu == 1) HideMenuItem("menu_sntp_time_settings"); }catch(ex){}
+		
+		try{if(__DEF_HideMenuManagement != 1) { ShowMenuItem("management_menu"); }}catch(ex){}
+		try{if(__DEF_HideMenuPasswordSettings != 1) { ShowMenuItem("password_settings_menu"); }}catch(ex){}
+		
+		try{if(__DEF_HideMenuReport != 1) { ShowMenuItem("status_menu"); }}catch(ex){}
+		try{if(__DEF_HideMenuReportLogs != 1) { ShowMenuItem("status_log_menu"); }}catch(ex){}
+		try{if(__DEF_HideMenuLicenceInformation != 1) { ShowMenuItem("licence_information_menu"); }}catch(ex){}
+		
+	}
+
+	function HideMenuItem(menuItemId)
+	{
+		try{document.getElementById(menuItemId).style.display = "none";}catch(ex){}
+	}
+
+	function ShowMenuItem(menuItemId)
+	{
+		try{document.getElementById(menuItemId).style.display = ""; }catch(ex){}
+	}
+
+	function DelBackendSession()
+	{
+		beginXML();
+		addCommand("webui-0", "delete_session","");
+		endXML();
+		sendAJAX(handle_logout_response);
+	}
+
+	function handle_logout_response()
+	{
+		top.location.href="/login.html";
+	}
+	
+</script>
+</head>
+
+<body id="menuBody">
+	<div id="waitDiv" class="center">
+		<p>
+			<script language="javascript">document.write(__ML_please_wait);</script>
+		</p>
+		<img src="/images/ajax-loader.gif"/>
+	</div>
+
+<div id="contentDiv" style="display:none">
+<div id="menuContainer">
+<ul id="mainlevel" class="rootmenu">
+	<li id="quicksetup_menu" style="display:none;">
+		<a href="wizard.html" class="menuTitle" target="mainFrame" onclick="return showMenu('quicksetup_sub');"><span id="__ML_quick_setup_menu">KOLAY KURULUM</span></a>
+		<ul id="quicksetup_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="wizard.html" target="mainFrame"><span id="__ML_quick_setup_menu">KOLAY KURULUM</span></a></li>
+		</ul>
+	</li>
+	<li id="homepage_menu" style="display:none;">
+		<a href="homepage.html" class="menuTitle" target="mainFrame" onclick="return showMenu('homepage_sub');"><span id="__ML_homepage">HOMEPAGE</span></a>
+		<ul id="homepage_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="homepage.html" target="mainFrame"><span id="__ML_homepage">HOMEPAGE</span></a></li>
+		</ul>
+	</li>
+	<li id="routerApSelection" style="display:none;">
+		<a href="routerApSelection.html" class="menuTitle" target="mainFrame" onclick="return showMenu('router_sub');"><span id="__ML_router_ap_selection">Router AP Selection</span></a>
+		<ul id="router_sub" class="submenu">>
+			<li class="sameAsMenuTitle"><a href="routerApSelection.html" target="mainFrame"><span id="__ML_router_ap_selection">Router AP Selection</span></a></li>
+		</ul>
+	</li>
+	<li id="adsl_menu" style="display:none;">
+		<a href="/adsl/status.html" class="menuTitle" target="mainFrame" onclick="return showMenu('adsl_sub');"><span id="__ML_adsl">ADSL</span></a>
+		<ul id="adsl_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/adsl/status.html" target="mainFrame"><span id="__ML_adsl">ADSL</span></a></li>
+			<li><a href="/adsl/wan.html" target="mainFrame"><span id="__ML_adsl_settings">ADSL Settings</span></a></li>
+			<li><a href="/adsl/dns.html" target="mainFrame"><span id="__ML_dns_setup">DNS Setup</span></a></li>
+			<li><a href="/adsl/mode.html" target="mainFrame"><span id="__ML_mode_setup">Mode Setup</span></a></li>
+		</ul>
+	</li>
+	<li id="internet_menu" style="display:none;">
+	    <a href="/internet/status.html" class="menuTitle" target="mainFrame" onclick="return showMenu('internet_sub');"><span id="__ML_internet_menu">INTERNET</span></a>
+		<ul id="internet_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/internet/status.html" target="mainFrame"><span id="__ML_internet_menu">INTERNET</span></a></li>
+			<li><a href="/internet/wan.html" target="mainFrame"><span id="__ML_internet_settings">Internet Settings</span></a></li>
+			<li><a href="/internet/dns.html" target="mainFrame"><span id="__ML_dns_setup">DNS Setup</span></a></li>
+			<li id="internet_advanced" style="display:none;"><a href="/internet/advanced.html" target="mainFrame"><span id="__ML_advanced">Advanced</span></a></li>
+			<li id="internet_mac_cloning" style="display:none;"><a href="/internet/mac_cloning.html" target="mainFrame"><span id="__ML_mac_cloning">Mac Cloning</span></a></li>
+			<li id="3g" style="display:none;"><a href="/internet/3g.html" target="mainFrame"><span id="__ML_3g">3G</span></a></li>
+		</ul>
+	</li>
+
+	<li id="lan_menu" style="display:none;">
+		<a id="lan_client_list_menu_caption" class="menuTitle" href="/lan/lan_dhcp_client_list.html" target="mainFrame" onclick="return showMenu('lan_sub');"><span class="uppercase" id="__ML_lan">LAN</span></a>
+		<ul id="lan_sub" class="submenu">
+			<!--<li class="sameAsMenuTitle"><a id="lan_client_list_menu_caption" href="/lan/lan_dhcp_client_list.html" target="mainFrame"><span id="__ML_lan">LAN</span></a></li>-->
+      		<li id="advanced_dhcps" style="display:none;"><a href="/lan/ip_and_dhcp_settings.html" target="mainFrame"><span id="__ML_ip_setup">IP Setup and DHCP</span></a></li>
+			<!--<li id="advanced_dhcps_settings"><a href="/lan/dhcp_setup.html" target="mainFrame"><span id=""></span></a></li>-->
+			<li id="old_dhcps" style="display:none;"><a href="/lan/lan_ip_dhcp.html" target="mainFrame"><span id="__ML_ip_setup">IP Setup and DHCP</span></a></li>
+			<li id="lan_client_list_menu"><a href="/lan/dhcp_clients.html" target="mainFrame"><span id="__ML_lan_clients">LAN Clients</span></a></li>
+		    <li id="vlan_config_menu" style="display:none;"><a href="/vlan/vlan_config.html" target="mainFrame"><span id="__ML_vlan_configuration">VLAN Config</span></a></li>
+		    <li id="port_settings_menu" style="display:none;"><a href="/vlan/port_settings.html" target="mainFrame"><span id="__ML_vlan_port_settings">Port Settings</span></a></li>
+		</ul>
+	</li>
+
+	<li id="wireless_menu" style="display:none;">
+		<a href="/wireless/status/status_new.html" class="menuTitle" target="mainFrame" onclick="return showMenu('wireless_sub');"><span id="__ML_wireless">WIRELESS</span></a>
+		<ul id="wireless_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/wireless/status/status_new.html" target="mainFrame"><span id="__ML_wireless_network">WIRELESS</span></a></li>
+			<li><a href="/wireless/settings/settings_new.html" target="mainFrame"><span id="__ML_wireless_setup">Wireless Setup</span></a></li>
+			<li id="menu_wireless_security"><a href="/wireless/security/security_new.html" target="mainFrame"><span id="__ML_wireless_security">Wireless Security</span></a></li>
+	    	<li id="menu_wireless_mac_filtering"><a href="/wireless/mac/acl_settings_new.html" target="mainFrame"><span id="__ML_wireless_mac_filtering">MAC Address Filtering</span></a></li>
+			<li id="menu_wireless_mesh"><a href="/wireless/mesh/mesh_new.html" target="mainFrame"><span id="__ML_mesh">MESH</span></a></li>
+			<li id="menu_wireless_wps"><a href="/wireless/wps/wps.html" target="mainFrame"><span id="__ML_wireless_WPS">WPS</span></a></li>
+		</ul>
+	</li>
+
+	<li id="wireless_menu_sta" style="display:none;">
+		<a href="/wireless/settings/settings_new.html" target="mainFrame" onclick="return showMenu('wireless_sta_sub');"><span id="__ML_wireless">WIRELESS</span></a>
+		<ul id="wireless_sta_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/wireless/settings/settings_new.html" target="mainFrame"><span id="__ML_wireless_setup">Wireless Setup</span></a></li>
+			<li id="menu_wireless_wps"><a href="/wireless/wps/wps.html" target="mainFrame"><span id="__ML_wireless_WPS">WPS</span></a></li>
+		</ul>
+	</li>
+    <li id="voip_menu" style="display:none;">
+            <a href="/voip/voip.html" class="menuTitle" target="mainFrame" onclick="return showMenu('voip_sub');"><span id="__ML_voip">TELEPHONE</span></a>
+        <ul id="voip_sub" class="submenu">
+        	<li class="sameAsMenuTitle"><a href="/voip/voip.html" target="mainFrame"><span id="__ML_voip">TELEPHONE</span></a></li>
+	   		<li id="voip_accounts_page" style="display:none;"><a href="/voip/accounts.html" target="mainFrame"><span id="__ML_voip_account_settings">Account Settings </span></a></li>
+	    	<li id="voip_call_feature_settings_page" style="display:none;"><a href="/voip/callFeatureSettings.html" target="mainFrame"><span id="__ML_voip_call_feature_settings">Call Feature Settings </span></a></li>
+	    	<li id="voip_call_history_page" style="display:none;"><a href="/voip/call_history.html" target="mainFrame"><span id="__ML_voip_call_history_caption"></span></a></li>
+	    	<li id="voip_dail_plan_page" style="display:none;"><a href="/voip/dialplan.html" target="mainFrame"><span id="__ML_voip_dialplan">Dial Plan</span></a></li>
+	    	<li id="voip_IncomingOutgoingCallSettings_page" style="display:none;"><a href="/voip/IncomingOutgoingCallSettings.html" target="mainFrame"><span id="__ML_voip_call_routing_settings">Call Routing Settings</span></a></li>
+	    	<li id="voip_advanced_settings_page" style="display:none;"><a href="/voip/advanced_settings.html" target="mainFrame"><span id="__ML_voip_advanced_settings">Advanced Settings</span></a></li>
+	</ul>
+    </li>
+
+	<li id="firewall_menu" style="display:none;">
+		<a href="/firewall/firewall.html" class="menuTitle" target="mainFrame" onclick="return showMenu('firewall_sub');"><span id="__ML_firewall">FIREWALL</span></a>
+		<ul id="firewall_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/firewall/firewall.html" target="mainFrame"><span id="__ML_firewall">FIREWALL</span></a></li>
+			<li id="firewall_access_control_menu" style="display:none;"><a href="/firewall/access_control.html" target="mainFrame"><span id="__ML_access_control">Access Control</span></a></li>
+		   	 <li id="firewall_mac_filter_menu" style="display:none;"><a href="/firewall/mac_filter.html" target="mainFrame"><span id="__ML_firewall_mac_filtering">MAC Address Filtering</span></a></li>
+			<li id="firewall_url_filter_menu" style="display:none;"><a href="/firewall/url_filters.html" target="mainFrame"><span id="__ML_url_filter">URL Filters</span></a></li>
+			<li id="firewall_anti_dos_menu" style="display:none;"><a href="/firewall/anti_dos.html" target="mainFrame"><span id="__ML_anti_dos">Anti-DoS</span></a></li>
+		</ul>
+	</li>
+
+	<li id="nat_menu" style="display:none;">
+		<a href="/nat/nat.html" class="menuTitle" target="mainFrame" onclick="return showMenu('nat_sub');"><span class="uppercase" id="__ML_nat">NAT</span></a>
+		<ul id="nat_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/nat/nat.html" target="mainFrame"><span id="__ML_nat">NAT</span></a></li>
+			<li id="nat_port_fw_menu" style="display:none;"><a href="/nat/port_fw.html" target="mainFrame"><span id="__ML_port_forwarding_title">Port Forwarding</span></a></li>
+			<li id="nat_dmz_menu" style="display:none;"><a href="/nat/dmz.html" target="mainFrame"><span id="__ML_dmz">DMZ</span></a></li>
+			<li id="nat_napt_menu" style=""><a href="/nat/napt.html" target="mainFrame"><span id="__ML_napt">NAPT</span></a></li>
+		</ul>
+	</li>
+	<li id="port_fw_menu" style="display:none;">
+		<a href="/nat/port_fw.html" class="menuTitle" target="mainFrame"><span id="__ML_port_forwarding">Port Forwarding</span></a>
+	</li>
+
+<!--	<li><a href="" target="mainFrame" onclick="return showMenu();"><span id="__ML_igmp">IGMP</span></a>
+	</li>
+-->
+	<li id="route_menu" style="display: none;">
+		<a href="/route/route_main.html" class="menuTitle" target="mainFrame" onclick="return showMenu('route_sub');"><span id="__ML_routing">Routing</span></a>
+		<ul id="route_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/route/route_main.html" target="mainFrame"><span id="__ML_routing">Routing</span></a></li>
+			<li><a href="/route/route_static.html" target="mainFrame"><span id="__ML_static_routing">Static Routing</span></a></li>
+			<li id="route_dynamic_rip_menu" style="display:none;"><a href="/route/route_dynamic_rip.html" target="mainFrame"><span id="__ML_dynamic_routing">Dynamic Routing</span></a></li>
+      <li id="route_wlan_to_vlan_menu" style="display:none;"><a href="/route/wan_to_vlan.html" target="mainFrame"><span id="__ML_wan_to_vlan_menu_entry">WAN to VLAN Mapping</span></a></li>
+
+		</ul>
+	</li>
+	<li id="igmp_menu" style="display:none;">
+		<a href="/igmp/igmp.html" class="menuTitle" target="mainFrame" onclick="return showMenu();"><span id="__ML_igmp_menu">IGMP</span></a>
+	</li>
+
+	<li id="qos_menu" style="display:none;">
+		<a href="/qos/qos_main.html" class="menuTitle" target="mainFrame" onclick="return showMenu('qos_sub');"><span id="__ML_qos">QoS</span></a>
+		<ul id="qos_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/qos/qos_main.html" target="mainFrame"><span id="__ML_qos">QoS</span></a></li>
+			<li><a href="/qos/qos_traffic_mapping.html" target="mainFrame"><span id="__ML_traffic_mapping">Traffic Mapping</span></a></li>
+			<li><a href="/qos/qos_traffic_classification.html" target="mainFrame"><span id="__ML_traffic_classification">Traffic Classification</span></a></li>
+			<li><a href="/qos/qos_traffic_shaping.html" target="mainFrame"><span id="__ML_traffic_shaping">Traffic Shaping</span></a></li>
+		</ul>
+	</li>
+
+	<li id="management_menu" style="display:none;">
+		<a href="/management/management.html" class="menuTitle" target="mainFrame" onclick="return showMenu('mgmt_sub');"><span id="__ML_management">MANAGEMENT</span></a>
+		<ul id="mgmt_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/management/management.html" target="mainFrame"><span id="__ML_management">MANAGEMENT</span></a></li>
+			<li id="management_snmp_menu" style="display:none;"><a href="/management/snmp.html" target="mainFrame"><span id="__ML_snmp">SNMP</span></a></li>
+            <li><a href="/management/ui_password.html" target="mainFrame"><span id="__ML_password_settings">Password Settings</span></a></li>
+			<li id="management_remote_management_menu" style="display:none;"><a href="/management/remote_management.html" target="mainFrame"><span id="__ML_remote_access">Remote Access</span></a></li>
+			<li id="management_tr069_menu" style="display:none;"><a href="/management/tr069.html" target="mainFrame"><span id="__ML_tr069_setup">TR-069 Setup</span></a></li>
+		</ul>
+	</li>
+	
+	<li id="password_settings_menu" style="display:none;">
+		<a href="/management/ui_password.html" class="menuTitle" target="mainFrame" onclick="return showMenu();"><span id="__ML_management"></span></a>
+	</li>
+
+	<li id="ddns_menu" style="display:none;">
+		<a href="/ddns/ddns.html" class="menuTitle" target="mainFrame" onclick="return showMenu('ddns_sub');"><span id="__ML_ddns">DDNS</span></a>
+		<ul id="ddns_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/ddns/ddns.html" target="mainFrame"><span id="__ML_ddns">DDNS</span></a></li>
+			<li><a href="/ddns/ddns_setup.html" target="mainFrame"><span id="__ML_ddns_settings">DDNS Settings</span></span></a></li>
+		</ul>
+	</li>
+
+	<li id="upnp_menu" style="display:none;">
+		<a href="/upnp/status.html" class="menuTitle" target="mainFrame" onclick="return showMenu('upnp_sub');"><span class="uppercase" id="__ML_upnp">UPNP</span></a>
+		<ul id="upnp_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/upnp/status.html" target="mainFrame"><span id="__ML_upnp">UPNP</span></a></li>
+			<li id="upnp_settings_menu" style="display: none;"><a href="/upnp/settings.html" target="mainFrame"><span id="__ML_upnp_settings">UPNP Settings</span></span></a></li>
+		</ul>
+	</li>
+
+	<li id="usb_menu" style="display: none;">
+		<a href="/usb/status.html" class="menuTitle" target="mainFrame" onclick="return showMenu('usb_sub');"><span id="__ML_usb_menu"></span></a>
+		<ul id="usb_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/usb/status.html" target="mainFrame"><span id="__ML_usb_menu"></span></a></li>
+			<li><a href="/usb/device_settings.html" target="mainFrame"><span id="__ML_usb_device_settings">Device Settings</span></a></li>
+			<li><a href="/usb/network_and_access_settings.html" target="mainFrame"><span id="__ML_usb_network_and_access_settings">Network and Access Settings</span></a></li>
+		</ul>
+	</li>
+	<li id="media_server_menu" style="display: none;">
+		<a href="/media_server/status.html" class="menuTitle" target="mainFrame" onclick="return showMenu('media_server_menu');"><span id="__ML_media_server_menu">Media Server</span></a>
+	</li>
+
+	<li>
+		<a href="/tools/tools.html" class="menuTitle" target="mainFrame" onclick="return showMenu('tl_sub');"><span id="__ML_tools">TOOLS</span></a>
+		<ul id="tl_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/tools/tools.html" target="mainFrame"><span id="__ML_tools">TOOLS</span></a></li>
+			<li><a href="/tools/fw_upgrade.html" target="mainFrame"><span id="__ML_fw_update">Firmware Update</span></a></li>
+			<li id="menu_sntp_time_settings"><a href="tools/sntp.html" target="mainFrame"><span id="__ML_time_setup">Time Setup</span></a></li>
+		</ul>
+	</li>
+
+	<li id="status_menu" style="display: none;">
+		<a href="/report/report.html" class="menuTitle" target="mainFrame" onclick="return showMenu('status_sub');"><span id="__ML_report">REPORT</span></a>
+		<ul id="status_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/report/report.html" target="mainFrame"><span id="__ML_report">REPORT</span></a></li>
+			<li><a href="/report/log.html" target="mainFrame"><span id="__ML_system_logs">System Logs</span></a></li>
+			<li><a href="/report/log_settings.html" target="mainFrame"><span id="__ML_log_settings">Log Settings</span></a></li>
+		</ul>
+	</li>
+
+	<li id="status_log_menu" style="display: none;">
+		<a href="/report/log.html" class="menuTitle" target="mainFrame" onclick="return showMenu('status_log_sub');"><span id="__ML_report">REPORT</span></a>
+		<ul id="status_log_sub" class="submenu">
+			<li class="sameAsMenuTitle"><a href="/report/log.html" target="mainFrame"><span id="__ML_system_logs">System Logs</span></a></li>
+			<li><a href="/report/log_settings.html" target="mainFrame"><span id="__ML_log_settings">Log Settings</span></a></li>
+		</ul>
+	</li>
+	
+	<li id="licence_information_menu" style="display: none;">
+		<a href="/licence_information.html" class="menuTitle" target="mainFrame" onclick="return showMenu('status_log_sub');"><span id="__ML_menu_licence_information"></span></a>
+	</li>
+
+	<li id="menu_logout" style="display: none;">
+		<a href="#" onclick="DelBackendSession();"><span id="__ML_exit"></span></a>
+	</li>
+
+</ul>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+<head>
+    <meta http-equiv="cache-control" content="no-cache"/>
+    <meta http-equiv="pragma" content="no-cache"/>
+    <meta http-equiv="expires" content="-1"/>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+
+	<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+	<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+	<!--[if lt IE 8]>
+	  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+	<![endif]-->
+	<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+	
+	<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+	<script type="text/javascript" src="/js/jquery.js"></script>
+	<script type="text/javascript" src="/js/jquery-ui.js"></script>
+	
+	<script type="text/javascript" src="/global/global_view.js"></script>
+
+	<script type="text/javascript" src="/js/ui.js"></script>
+	<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+	<script type="text/javascript" src="/js/airlib.js"></script>
+	<script type="text/javascript" src="/js/Definitions.js"></script>
+	<script type="text/javascript" language="Javascript">
+		var obj;
+		
+		$(document).ready(startQuery);
+		
+		function startQuery()
+		{
+			obj = new uiObject();
+			obj.addQuery({module: "sysmgr", key: "fwversion"});
+			if(getDef("__DEF_automatic_update_enable") == "1") {
+				obj.addGet({module: "http_upgrade", key: "isEnabled"});
+			}
+			
+			obj.query();
+			
+			obj.addField({table: "fwUpgradeObj", module: "sysmgr", field: "fwversion"});
+			if(obj.tables['fwUpgradeObj'][0])
+			{
+				$("[content=firmware_version]").html(obj.tables['fwUpgradeObj'][0]['sysmgr']['fwversion'].value);	
+			}
+			
+			if(getDef("__DEF_automatic_update_enable") == "1") {
+				obj.addField({table: "httpUpgradeObj", module: "http_upgrade", field: "isEnabled"});
+				if(obj.tables['httpUpgradeObj'][0])
+				{
+					$("#automatic_update").attr("checked", obj.tables['httpUpgradeObj'][0]['http_upgrade']['isEnabled'].value == "1");
+				}
+				$("#automatic_update_row").show();
+				$("#firmwareVersionRow").hide();
+			}
+
+			globalView.addRowClass();
+		    globalView.addButtonClass();
+			showPage();
+		}
+
+		function check_new_firmware()
+		{
+			disablePage();
+			beginXML();
+			addQuery("http_upgrade-0", "checkforupdate", "");
+			endXML();
+			sendAJAX(check_status);
+		}
+
+		function check_status()
+		{
+			beginXML();
+			addQuery("http_upgrade-0", "checkstatus", "");
+			endXML();
+			sendAJAX(parse_check_status);
+		}
+
+		function parse_check_status()
+		{
+			if(getValue("http_upgrade-0", "Status") == "ok" || getValue("http_upgrade-0", "Status") == "no fw available")
+			{
+				send_fw_version_query();
+			}
+			else if(getValue("http_upgrade-0", "Status") == "fail")
+			{
+				alert(__ML_fw_upgrade_check_fail);
+				showPage();
+			}
+			else if(getValue("http_upgrade-0", "Status") == "checking")
+			{
+				setTimeout(check_status, 1000);
+			}
+		}
+
+		function send_fw_version_query()
+		{
+			beginXML();
+			addQuery("http_upgrade-0", "checkfwversion", "");
+			endXML();
+			sendAJAX(parse_fw_version_query);
+		}
+
+		function redirect_progress_bar()
+		{
+			top.location.href = "/tools/progressBar.html";
+		}
+
+		function parse_fw_version_query()
+		{
+			if(getValue("http_upgrade-0","fwversion") != $("#firmware_version").html() && getValue("http_upgrade-0","fwversion") != "")
+			{
+				if(confirm(__ML_fw_upgrade_confirm_auto_upgrade.replace("@version@", getValue("http_upgrade-0","fwversion"))))
+				{
+					beginXML();
+					addCommand("http_upgrade-0", "updatefw", "");
+					endXML();
+					sendAJAX(redirect_progress_bar);
+				}
+			}
+			else
+			{
+				alert(__ML_fw_upgrade_no_new_firmware);
+			}
+			showPage();
+		}
+
+		function save()
+		{
+			disablePage();
+			beginXML();
+			addCommand("cfgmgr-0", "begin_transaction", "http_upgrade-0");
+			addSet("http_upgrade-0", "isEnabled", $("#automatic_update").attr("checked") ? "1" : "0");
+			addCommand("cfgmgr-0", "commit", "http_upgrade-0");
+			addCommand("cfgmgr-0", "end_transaction", "http_upgrade-0");
+			addCommand("cfgmgr-0", "save");
+			endXML();
+			sendAJAX(reloadPage);
+		}
+
+		function reloadPage()
+		{
+			disablePage();
+			startQuery();
+		}
+
+		function uiDoUpdate(value)
+		{
+			if((value == null) || (value == ""))
+			{
+				alert(__ML_FW_File_Alert);
+				return false;
+			}
+			else
+			{
+				disablePage();
+				document.getElementById("__ML_uiUpgrade").disabled = true;
+				document.getElementById("uiPostUpdateForm").submit();
+				return true;
+			}
+		}
+	</script>
+</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+	
+		<div id="contentDiv" style="display:none">
+			<div class="textCenter title">
+				<span id="__ML_fw_update" ml="__ML_fw_update"></span>
+			</div>
+			<form name="Firmware" method="POST" target="_top" action="/cgi-bin/loader" enctype="multipart/form-data" id="uiPostUpdateForm">
+					<div id="automatic_update_row" class="marginCenter globalHeaderInfoDiv" style="display: none;">
+						<p>
+							<strong><span id="__ML_fw_upgrade_automatic_update"></span></strong>
+						</p>
+						<p>
+							<span id="__ML_fw_upgrade_current_firmware_version"></span>: <span id="firmware_version" content="firmware_version"></span>
+						</p>
+						<p>
+							<span id="__ML_automatic_firmware_update_info"></span>
+						</p>
+						<p>
+							<span id="__ML_fw_upgrade_automatically_update_info"></span>
+						</p>
+						<p class="textCenter">
+							<span id="__ML_fw_upgrade_auto_firmware_update"></span>:<input type="checkbox" id="automatic_update" /><input type="button" value="Save" onclick="save();" id="__ML_save" name="ClickSave"  /><input type="button" value="Cancel" onclick="reloadPage();" id="__ML_cancel" />
+						</p>
+						<p class="textCenter">
+							<input type="button" value="Save" onclick="check_new_firmware();" id="__ML_fw_upgrade_check_for_updates_now" name="ClickSave" />
+						</p>
+					</div>
+					<div class="marginCenter globalHeaderInfoDiv">
+						<p id="firmwareVersionRow">
+							<b><span id="__ML_fwversion"></span></b><span content="firmware_version"></span>
+						</p>
+						<p>
+							<strong><span id="__ML_fw_upgrade_manual_update"></span></strong>
+						</p>
+						<p>
+							<span id="__ML_FW_UPG_TXT">To update the running firmware on the modem, click the Browse button and then find the most recent firmware file in the window that will pop up. <BR/>(You can get the most recent firmware from http://www.airties.com) Then click Update button.</span>
+						</p>
+						<p class="textCenter">
+								<span id="__ML_uiViewFileSelector">Select File</span>
+								<input type="file" name="UploadFWFile" size="50" id="_UploadFWFile_" />
+						</p>
+					</div>
+					<div class="footer">
+						<input type="button" value="Update" name="upgrade" alt="Update Gateway" onclick="uiDoUpdate(document.getElementById('_UploadFWFile_').value)" id="__ML_uiUpgrade" />
+					</div>
+			</form>
+		</div>
+	</body>
+</html>
+
+

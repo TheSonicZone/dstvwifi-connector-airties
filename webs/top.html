@@ -1,0 +1,153 @@
+<html>
+<head>
+	<title></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="EXPIRES" CONTENT="-1">
+
+	<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+	<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+	<!--[if lt IE 8]>
+	  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+	<![endif]-->
+
+	<link href="/style/style_top.css" rel="stylesheet" type="text/css">
+
+	<script type="text/javascript" src="/js/jquery.js"></script>
+	<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+	<script type="text/javascript" src="/js/ui.js"></script>
+	<script type="text/javascript" src="/js/Definitions.js"></script>
+	<script language="javascript">
+
+		var GETDATA = new Array();
+		parseURI();
+	
+		var queryCounter = 0;
+	
+		function handle_logout_response()
+		{
+			top.location.href="/login.html";
+		}
+	
+		function DelBackendSession()
+		{
+			beginXML();
+			addCommand("webui-0", "delete_session","");
+			endXML();
+			sendAJAX(handle_logout_response);
+		}
+	
+		function uiDoLogout()
+		{
+			DelBackendSession();
+		}
+	
+		function uiDoRefresh()
+		{
+			top.mainFrame.location.href=top.mainFrame.location;
+		}
+	
+		function send_lang_query(selectedLang)
+		{
+			$.get("/cgi-bin/select_lang", {lang: selectedLang},
+				function(data){
+					parse_lang_response();
+			});
+		}
+	
+		function parse_lang_response()
+		{
+			$.get("/top.html", function(){
+				reloadFrames();
+			}).fail(parse_lang_response);
+		}
+		
+		function reloadFrames(){
+			for (var i=0;i<top.frames.length;i++) {
+				top.frames[i].location.reload();
+			}
+		}
+	
+		function SelectLang(lang)
+		{
+			send_lang_query(lang);
+		}
+	
+		function cmbSelectLanguage_changed()
+		{
+			var lang = $("#cmbSelectLanguage").val();
+			send_lang_query(lang);
+		}
+
+		$(document).ready(function()
+		{
+			// setLanguage();
+
+			if(typeof GETDATA["productboardtype"] === "undefined")
+				$("#productType").html(getDef("__DEF_ProductBoardTypeForLoginPage"));
+			else
+				$("#productType").html(GETDATA["productboardtype"]);
+			showPage();
+		});
+	
+		function setLanguage()
+		{
+			var langObj;
+			
+			switch (__DEF_langSelectionType) {
+				case "select":
+					langObj = new uiLanguageObject("select");
+					langObj.header = "<select id='cmbSelectLanguage' onchange='cmbSelectLanguage_changed();'>";
+					langObj.footer = "</select>";
+					break;
+				case "links":
+				default:
+					langObj = new uiLanguageObject("links");
+			}
+	
+			langObj.addLanguage("tr" , "Türkçe" , getDef("__DEF_TrLangPrio"), getDef("__DEF_TrLangEnabled"));
+			langObj.addLanguage("en" , "English" , getDef("__DEF_EnLangPrio"), getDef("__DEF_EnLangEnabled"));
+			langObj.addLanguage("gr" , "Ελληνικά" , getDef("__DEF_GrLangPrio"), getDef("__DEF_GrLangEnabled"));
+			langObj.addLanguage("ru" , "Русский" , getDef("__DEF_RuLangPrio"), getDef("__DEF_RuLangEnabled"));
+			langObj.addLanguage("it" , "Italiano" , getDef("__DEF_ItLangPrio"), getDef("__DEF_ItLangEnabled"));
+			langObj.addLanguage("fr" , "Français" , getDef("__DEF_FrLangPrio"), getDef("__DEF_FrLangEnabled"));
+			langObj.addLanguage("de" , "Deutsch" , getDef("__DEF_DeLangPrio"), getDef("__DEF_DeLangEnabled"));
+			langObj.addLanguage("es" , "Spanish" , getDef("__DEF_EsLangPrio"), getDef("__DEF_EsLangEnabled"));
+
+			langObj.sortLanguageArray();
+
+			var tableContent = langObj.getLinks();
+	
+			tableContent += " &nbsp;&nbsp;|&nbsp;&nbsp; <a href=\"#\" class=\"geneltxt\" onclick=\"uiDoLogout()\">"+ __ML_exit +"</a> - <a href=\"#\" class=\"geneltxt\" onClick=\"uiDoRefresh()\" >" + __ML_refresh + "</a>";
+	
+	
+			document.getElementById("language").innerHTML = tableContent;
+			
+			switch (__DEF_langSelectionType) {
+				case "select":
+					$("#cmbSelectLanguage").val(__ML_lang_code);
+					break;
+				default:
+			}
+			
+		}
+	</script>
+</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		<div id="contentDiv">
+		
+		<div id="head">
+			<div id="logo"></div>
+			<div id="productType"></div>
+			<div id="language"></div>
+		</div>
+		</div>
+	</body>
+</html>

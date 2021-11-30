@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+<head>
+	<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8">
+	
+	<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+	<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+	<!--[if lt IE 8]>
+	  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+	<![endif]-->
+	<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+	
+	<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+	<script type="text/javascript" src="/js/jquery.js"></script>
+	<script type="text/javascript" src="/js/jquery-ui.js"></script>
+	
+	<script type="text/javascript" src="/js/ui.js"></script>
+	<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+	<script type="text/javascript" src="/js/Definitions.js"></script>
+	
+	<script type="text/javascript" language="JavaScript">document.write("<title>" + __ML_restarting_system0 + "</title>")</script>	
+	
+	<script type="text/javascript" language="Javascript">
+
+	var delay_time = __DEF_firmware_upgrade_reboot_duration;
+	var progress_bar_update_rate = 10;
+	var start = new Date();
+
+	$(document).ready(function()
+	{
+		Init();
+	});
+	
+	function Init()
+	{
+		$("#progressbar").progressbar({
+		    max: 100
+		});
+		
+		updateProgress();
+		showPage();
+	}
+
+	function updateProgress()
+	{
+		$("#progressbar").data("progress", setInterval(function() {
+			var elapsed_time = (new Date().getTime() - start.getTime());
+		  	if(elapsed_time > delay_time) {
+		  		$("#progressbar").progressbar( { value: 100 } );
+		    	clearInterval($("#progressbar").data("progress")); //Stop updating
+		    	top.location.href="/";
+		  	}
+		  $("#progressbar").progressbar( { value: (100*elapsed_time/delay_time) } );
+		}, progress_bar_update_rate));
+	}
+
+	</script>
+
+</head>
+
+
+<body class="simpleBackground">
+	<div id="waitDiv" class="center">
+		<p>
+			<script language="javascript">document.write(__ML_please_wait);</script>
+		</p>
+		<img src="/images/ajax-loader.gif"/>
+	</div>
+
+	<div id="contentDiv" class="simpleBackground" style="display:none">
+		<form method="post" onSubmit="return false">
+		<br />
+		<table id="uiTable0">
+		    <tr>
+			    <td nowrap class="textCenter">
+			    	<span id="__ML_restarting_system0" class="large"></span>
+			    </td>
+		    </tr>
+		</table>
+		<table id="uiTable1" class="marginCenter">
+		    <tr>
+		        <td colspan="2" class="textCenter">
+		                <strong><span id="__ML_prog_status">Status</span></strong>
+		        </td>
+		    </tr>
+		
+		    <tr>
+		     <td colspan="2" class="textCenter">
+		        <div id="progressbar" class="marginCenter"></div>
+		     </td>
+		    </tr>
+		
+		    <tr>
+		        <td colspan="2" class="textCenter">
+                	<span id="__ML_restarting_system1">Please wait while your system is restarting...</span>
+		        </td>
+		    </tr>
+		
+		</table>
+		</form>
+	</div>
+</body>
+</html>

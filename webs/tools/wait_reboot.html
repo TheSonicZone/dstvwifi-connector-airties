@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title></title>
+	<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8">
+
+	<script type="text/javascript" src="/js/jquery.js"></script>
+	<script type="text/javascript" src="/js/ui.js"></script>
+
+	<script type="text/javascript" language="javascript" >
+	
+	parseURI();
+	
+	var status_modem = GETDATA["status_modem"];
+	var redirectIp = GETDATA["redirectIp"];
+	var firmwareUpgrade = GETDATA["firmwareUpgrade"];
+	
+	
+	$(document).ready(function()
+	{
+		var pageTitle = "";
+		if(getDef("__DEF_HtmlTitle") != "") pageTitle = getDef("__DEF_HtmlTitle");
+		document.title = pageTitle;
+
+		var urlParameter = "";
+		
+		if(status_modem != undefined )
+		{
+			urlParameter = urlParameter == "" ? "status_modem=" + status_modem : urlParameter + "&status_modem=" + status_modem;
+		}
+		
+		if(redirectIp != undefined)
+		{
+			urlParameter = urlParameter == "" ? "redirectIp=" + redirectIp : urlParameter + "&redirectIp=" + redirectIp;
+		}
+		
+		if(firmwareUpgrade != undefined)
+		{
+			urlParameter = urlParameter == "" ? "redirectIp=" + firmwareUpgrade : urlParameter + "&redirectIp=" + firmwareUpgrade;
+		}
+	
+		$("#mainFrame").attr("src","wait_reboot_main.html?" + urlParameter);
+	
+	});
+	
+	</script>
+</head>
+<frameset rows="125,*" frameborder="NO" border="0" framespacing="0">
+	<frame src="/top.html" name="topFrame" scrolling="NO" noresize >
+	<frame  id="mainFrame">
+</frameset>
+
+<noframes>
+
+	<body>
+	</body>
+</noframes>
+</html>

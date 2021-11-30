@@ -1,0 +1,466 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+	<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+	<head>
+		<meta http-equiv="Cache-control" content="NO-CACHE"/>
+		<meta http-equiv="PRAGMA" content="NO-CACHE"/>
+		<meta http-equiv="EXPIRES" content="-1"/>
+		<meta http-equiv="Content-Type" content="text/html; CHARSET=UTF-8"/>
+
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+		<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+		
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/Definitions.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript">
+			var __V_adsl_connection;
+			var __V_adsl_rate_down;
+			var __V_adsl_rate_up;
+			var __V_adsl_attn_up;
+			var __V_adsl_attn_down;
+			var __V_adsl_mode;
+			var __V_DSLHALVer;
+			var __V_AnnexADataPumpVer;
+			var __V_AnnexBDataPumpVer;
+			var __V_internet_connection;
+			var __V_serial_no;
+			var __V_fwversion;
+			var __V_dsl_mac;
+			var __V_eth_mac;
+			var __V_usb_mac;
+			var __V_hw_revision;
+			var __V_bootloader;
+			var __V_model_name;
+			var __V_wireless_mac;
+			var __V_wireless_mac_1;
+	
+		var obj;
+			
+		function startQuery()
+		{
+			obj = new uiObject();
+			
+			if(__DEF_ADSLDisabled == 0)
+			{
+				obj.addQuery({module: "dsl", key: "status"});
+				obj.addQuery({module: "dsl", key: "downlink"});
+				obj.addQuery({module: "dsl", key: "uplink"});
+				obj.addQuery({module: "dsl", key: "halVersion"});
+				obj.addQuery({module: "dsl", key: "datapumpVersion"});
+				obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_DSL_0"});
+			}
+			
+			obj.addQuery({module: "sysmgr", key: "fwversion"});
+			obj.addQuery({module: "sysmgr", key: "getenv", value: "SERIAL_NUMBER"});
+			obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_ETH_0"});
+			
+			if(__DEF_HideUSB != 1)
+			{
+				obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_USB_L_0"});
+			}
+			
+			if(__DEF_HideWirelessMenu != 1) 
+			{
+				obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_WLAN_0"});
+				obj.addQuery({module: "sysmgr", key: "getenv", value: "MAC_WLAN_1"});
+				obj.addQuery({module: "devmgr", key: "inst_list", value: "wireless"});
+				obj.addQuery({module: "devmgr", key: "inst_list", value: "wireless_core"});
+			}
+			
+			obj.addQuery({module: "sysmgr", key: "productid"});
+			obj.addQuery({module: "sysmgr", key: "getenv", value: "HW_REVISION"});
+			obj.addQuery({module: "sysmgr", key: "getenv", value: "BOOTLOADER_VER"});
+			
+			if(getDef("__DEF_Hide3G") != 1)
+			{
+				obj.addGet({module: "serial", key: "active"});
+				obj.addGet({module: "serial", key: "imei"});
+				obj.addGet({module: "serial", key: "simpin_status"});
+				obj.addGet({module: "serial", key: "roaming"});
+				obj.addGet({module: "serial", key: "operator"});
+				obj.addGet({module: "serial", key: "connection_mode"});
+				obj.addGet({module: "serial", key: "signal_strength"});
+			}
+	
+			obj.query();
+			obj.addField({table: "wireless_core_instances", module: "devmgr", field: "wireless_core.inst@counter@", fieldAlias: "instance"});
+			obj.addField({table: "wireless_instances", module: "devmgr", field: "wireless.inst@counter@", fieldAlias: "instance"});
+	
+			
+			if(__DEF_ADSLDisabled == 0)
+			{
+				obj.addField({table: "reportObj", module: "dsl", field: "datapumpVersion.AnnexA"});
+				obj.addField({table: "reportObj", module: "dsl", field: "datapumpVersion.AnnexB"});
+				obj.addField({table: "reportObj", module: "dsl", field: "status.training_stat"});
+							
+				__V_AnnexADataPumpVer = obj.tables['reportObj'][0]['dsl']['datapumpVersion.AnnexA'].value;
+				__V_AnnexBDataPumpVer = obj.tables['reportObj'][0]['dsl']['datapumpVersion.AnnexB'].value;
+				__V_adsl_connection = obj.tables['reportObj'][0]['dsl']['status.training_stat'].value;
+				
+				if (__V_adsl_connection == "Showtime")
+				{	
+					obj.addField({table: "reportObj", module: "dsl", field: "downlink.rate"});
+					obj.addField({table: "reportObj", module: "dsl", field: "uplink.rate"});
+					obj.addField({table: "reportObj", module: "dsl", field: "downlink.attn"});
+					obj.addField({table: "reportObj", module: "dsl", field: "uplink.attn"});
+					obj.addField({table: "reportObj", module: "dsl", field: "status.mode"});
+					obj.addField({table: "reportObj", module: "dsl", field: "halVersion"});
+					
+					__V_adsl_connection = __ML_connected;
+					__V_adsl_rate_down = obj.tables['reportObj'][0]['dsl']['downlink.rate'].value;
+					__V_adsl_rate_up = obj.tables['reportObj'][0]['dsl']['uplink.rate'].value;
+					__V_adsl_attn_down = obj.tables['reportObj'][0]['dsl']['downlink.attn'].value;
+					__V_adsl_attn_up = obj.tables['reportObj'][0]['dsl']['uplink.attn'].value;
+					__V_adsl_mode = obj.tables['reportObj'][0]['dsl']['status.mode'].value;
+					__V_DSLHALVer = obj.tables['reportObj'][0]['dsl']['halVersion'].value;
+				}
+				else
+				{
+					__V_adsl_connection = __ML_disconnected;
+					__V_adsl_rate_down = "-";
+					__V_adsl_rate_up = "-";
+					__V_adsl_attn_down = "-";
+					__V_adsl_attn_up = "-";
+					__V_adsl_mode = "-";
+					__V_DSLHALVer = "-";
+				}
+			}
+			
+			obj.addField({table: "reportObj", module: "sysmgr", field: "SERIAL_NUMBER"});
+			obj.addField({table: "reportObj", module: "sysmgr", field: "MAC_ETH_0"});
+			obj.addField({table: "reportObj", module: "sysmgr", field: "productid"});
+			obj.addField({table: "reportObj", module: "sysmgr", field: "HW_REVISION"});
+			obj.addField({table: "reportObj", module: "sysmgr", field: "BOOTLOADER_VER"});
+			obj.addField({table: "reportObj", module: "sysmgr", field: "fwversion"});
+			
+			if(__DEF_model_name != "")
+			{
+				__V_model_name = __DEF_model_name;
+			}
+			else
+			{
+				__V_model_name = obj.tables['reportObj'][0]['sysmgr']['productid'].value;
+			}
+
+			__V_hw_revision = obj.tables['reportObj'][0]['sysmgr']['HW_REVISION'].value;
+			__V_bootloader = obj.tables['reportObj'][0]['sysmgr']['BOOTLOADER_VER'].value;
+			__V_fwversion = obj.tables['reportObj'][0]['sysmgr']['fwversion'].value;		
+			__V_serial_no = obj.tables['reportObj'][0]['sysmgr']['SERIAL_NUMBER'].value;
+			__V_eth_mac = obj.tables['reportObj'][0]['sysmgr']['MAC_ETH_0'].value;
+			
+			if(__DEF_HideUSB != 1)
+			{
+				obj.addField({table: "reportObj", module: "sysmgr", field: "MAC_USB_L_0"});
+				__V_usb_mac = obj.tables['reportObj'][0]['sysmgr']['MAC_USB_L_0'].value;
+			}
+			if(__DEF_HideWirelessMenu != 1) 
+			{
+				obj.addField({table: "reportObj", module: "sysmgr", field: "MAC_WLAN_0"});
+				__V_wireless_mac = obj.tables['reportObj'][0]['sysmgr']['MAC_WLAN_0'].value;
+				obj.addField({table: "reportObj", module: "sysmgr", field: "MAC_WLAN_1"});
+				__V_wireless_mac_1 = obj.tables['reportObj'][0]['sysmgr']['MAC_WLAN_1'].value;
+			}
+			if(__DEF_ADSLDisabled != 1)
+			{
+				obj.addField({table: "reportObj", module: "sysmgr", field: "MAC_DSL_0"});
+				__V_dsl_mac = obj.tables['reportObj'][0]['sysmgr']['MAC_DSL_0'].value;
+			}
+			
+			if(getDef("__DEF_Hide3G") != 1)
+			{
+				obj.addField({table: "3gObj", module: "serial", field: "active"});
+				obj.addField({table: "3gObj", module: "serial", field: "imei"});
+				obj.addField({table: "3gObj", module: "serial", field: "simpin_status"});
+				obj.addField({table: "3gObj", module: "serial", field: "roaming"});
+				obj.addField({table: "3gObj", module: "serial", field: "operator"});
+				obj.addField({table: "3gObj", module: "serial", field: "connection_mode"});
+				obj.addField({table: "3gObj", module: "serial", field: "signal_strength"});
+				obj.addFilter({table: "3gObj", module: "serial", field: "active", property: "inst", compareType: "equal", compareValue: "serial-0"});
+				if(obj.tables['3gObj'][0])
+				{
+					$("#__V_3g_status").text((obj.tables['3gObj'][0]['serial']['active'].value == "1" ? getML("__ML_3g_active") : getML("__ML_3g_passive")) + (obj.tables['3gObj'][0]['serial']['operator'].value != "" ? "--" : "") + obj.tables['3gObj'][0]['serial']['operator'].value);
+					$("#__V_3g_imei").text(obj.tables['3gObj'][0]['serial']['imei'].value);
+					$("#__V_3g_conn_mode").text(obj.tables['3gObj'][0]['serial']['connection_mode'].value);
+					$("#__V_3g_signal_strength").text(obj.tables['3gObj'][0]['serial']['signal_strength'].value + (obj.tables['3gObj'][0]['serial']['signal_strength'].value != "" ? " dbm" : ""));
+					$("#__V_3g_roaming").text(obj.tables['3gObj'][0]['serial']['roaming'].value);
+					
+					if(obj.tables['3gObj'][0]['serial']['simpin_status'].value == "pin_ok")
+					{
+						$("#__V_3g_pin_status").html(getML("__ML_3g_pin_ok"));
+					}
+					else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "pin_failed")
+					{
+						$("#__V_3g_pin_status").html(getML("__ML_3g_pin_failed"));
+					}
+					else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "puk_required")
+					{
+						$("#__V_3g_pin_status").html(getML("__ML_3g_puk_required"));
+					}
+					else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "pin_required")
+					{
+						$("#__V_3g_pin_status").html(getML("__ML_3g_pin_required"));
+					}
+					else if (obj.tables['3gObj'][0]['serial']['simpin_status'].value == "sim_failure")
+					{
+						$("#__V_3g_pin_status").html(getML("__ML_3g_sim_failure"));
+					}
+					else
+					{
+						$("#__V_3g_pin_status").html("");
+					}
+				}
+			}
+			
+			if(__DEF_ADSLDisabled == 1)
+			{
+				document.getElementById("adsl_table_cell").style.display = "none";
+				document.getElementById("product_info_cell").colSpan = 2;
+				document.getElementById("dsl_mac_row").style.display = "none";
+				document.getElementById("dsl_hal_row").style.display = "none";
+				document.getElementById("annexa_datapump_row").style.display = "none";
+				document.getElementById("annexb_datapump_row").style.display = "none";
+			}
+			if(getDef("__DEF_Hide3G") == 1)
+			{
+				document.getElementById("3g_info_cell").style.display = "none";
+			}
+			
+			if(__DEF_HideAnnexAButton == 1) document.getElementById("annexa_datapump_row").style.display = "none";
+			if(__DEF_HideAnnexBButton == 1) document.getElementById("annexb_datapump_row").style.display = "none";
+	
+			if(__DEF_HideUSB == 1) document.getElementById("usb_row").style.display="none";
+			if(__DEF_HideWirelessMenu == 1)
+			{
+				$("[grp=wireless]").hide();
+			}
+			else
+			{
+				if(obj.tables.wireless_core_instances.length + obj.tables.wireless_instances.length < 2)
+				{
+					$("#wireless_mac_row_1").hide();
+					$("#mac_id").hide();
+					$("#mac_id_1").hide();
+				}
+			}
+	
+			showPage();
+                        $(function(){
+                                if (__DEF_show_license_link_on_the_report_page) {
+                                        $("#contentDiv").height($(window).height() - 30).css("min-height", "400px");
+                                        $("#license_row").show();
+                                        $("#license_row").css({
+                                                "position" : "absolute",
+                                                "top" : $("#contentDiv").height() - 30,
+                                                "left" : ($("#contentDiv").width() - $("#license_link").width()) / 2
+                                        });
+                                        $("#license_link").click(function(){
+                                                $.get("/license.html", function(data) {
+                                                        $("<div>").html(data).prop("title", "Licenses").dialog({
+                                                                "modal" : true,
+                                                                "width" : "750px",
+                                                                "maxHeight" : 0,
+                                                                "open" : function() {
+                                                                        $(this).height($(window).height()*0.7);
+                                                                        $(this).dialog({position: "center"});
+                                                                }
+                                                        });
+                                                }).fail(function() {
+                                                        $("<div>").html("The licenses information could not be found").prop("title", "Licenses").dialog({
+                                                                modal : true
+                                                        });
+                                                });
+                                        });
+                                }
+                        });
+
+		}
+	
+		$(document).ready(function()
+		{
+			startQuery();
+
+			globalView.addRowClass();
+		});
+		</script>
+	</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		<div id="contentDiv" style="display:none">
+			<div class="textCenter title">
+				<span id="__ML_report" ml="__ML_report"></span>
+			</div>
+			<div class="center globalHeaderInfoDiv">
+				<span id="__ML_report_intro" ml="__ML_report_intro"></span>
+			</div>
+			
+			<table id="adsl_table_cell" class="marginCenter globalBorder widthAuto">
+				<thead>
+					<tr>
+						<th colspan="3">
+							<span id="__ML_adsl_status">ADSL Status</span>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							<span id="__ML_adsl_connection">ADSL Connection: </span>
+						</td>
+						<td>
+							<span id="__V_adsl_connection"> &nbsp; </span>
+						</td>
+					</tr>
+					<tr>
+					<td>
+						<span id="__ML_adsl_rate_up">ADSL Upstream Rate(Kb/s): </span>
+					</td>
+					<td><span id="__V_adsl_rate_up"></span>
+					</td>
+					</tr>
+					<tr>
+						<td><span id="__ML_adsl_rate_down">ADSL Downstream Rate(Kb/s): </span>
+						</td>
+						<td><span id="__V_adsl_rate_down"></span>
+						</td>
+					</tr>
+					<tr>
+						<td><span id="__ML_adsl_mode">Mode: </span></td>
+						<td><span id="__V_adsl_mode"> &nbsp; </span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_adsl_attn_down">Downstream Attenuation:</span></td>
+						<td><span id="__V_adsl_attn_down"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_adsl_attn_up">Uptream Attenuation:</span></td>
+						<td><span id="__V_adsl_attn_up"></span></td>
+					</tr>
+				</tbody>
+			</table>
+			<table id="product_info_cell" class="marginCenter globalBorder widthAuto">
+				<thead>
+					<tr>
+						<th colspan="3"><span id="__ML_product_info">Product Information</span></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><span id="__ML_model_name">Model Name:</span></td>
+						<td><span id="__V_model_name"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_hw_revision">Hardware Revision:</span></td>
+						<td><span id="__V_hw_revision"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_serial_no">Serial Number:</span></td>
+						<td><span id="__V_serial_no"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_eth_mac">Ethernet MAC Address:</span></td>
+						<td><span id="__V_eth_mac"></span></td>
+					</tr>
+					<tr id="dsl_mac_row">
+						<td><span id="__ML_dsl_mac">DSL MAC Address:</span></td>
+						<td><span id="__V_dsl_mac"></span></td>
+					</tr>
+					<tr id="usb_row">
+						<td><span id="__ML_usb_mac">USB MAC Address</span>:</td>
+						<td><span id="__V_usb_mac"></span></td>
+					</tr>
+					<tr id="wireless_row" grp="wireless">
+						<td><span id="__ML_wireless_mac">Wireless MAC Address</span><span id="mac_id"> 1</span>:</td>
+						<td><span id="__V_wireless_mac"></span></td>
+					</tr>
+					<tr id="wireless_mac_row_1" grp="wireless">
+						<td><span id="__ML_wireless_mac">Wireless MAC Address</span><span id="mac_id_1"> 2</span>:</td>
+						<td><span id="__V_wireless_mac_1"></span></td>
+					</tr>
+				</tbody>
+			</table>
+			<table id="3g_info_cell" class="marginCenter globalBorder widthAuto">
+				<thead>
+					<tr>
+						<th colspan="3"><span id="__ML_3g_info">3G Status</span></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><span id="__ML_3g_status">3G:</span></td>
+						<td><span id="__V_3g_status"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_3g_imei">IMEI:</span></td>
+						<td><span id="__V_3g_imei"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_3g_pin_status">Pin Durumu:</span></td>
+						<td><span id="__V_3g_pin_status"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_3g_conn_mode">Baglantı modu:</span></td>
+						<td><span id="__V_3g_conn_mode"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_3g_signal_strength">Sinyal Seviyesi:</span></td>
+						<td><span id="__V_3g_signal_strength"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_3g_roaming">Roaming:</span></td>
+						<td><span id="__V_3g_roaming"></span></td>
+					</tr>
+				</tbody>
+			</table>
+			<table id="software_info_cell" class="marginCenter globalBorder widthAuto">
+				<thead>
+					<tr>
+						<th colspan="3"><span id="__ML_software_versions">Software Versions</span></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><span id="__ML_fwversion">Firmware Version:</span></td>
+						<td><span id="__V_fwversion"></span></td>
+					</tr>
+					<tr id="dsl_hal_row">
+						<td>DSL HAL:</td>
+						<td><span id="__V_DSLHALVer"></span></td>
+					</tr>
+					<tr id="annexa_datapump_row">
+						<td>AnnexA Datapump:</td>
+						<td><span id="__V_AnnexADataPumpVer"></span></td>
+					</tr>
+					<tr id="annexb_datapump_row">
+						<td>AnnexB Datapump:</td>
+						<td><span id="__V_AnnexBDataPumpVer"></span></td>
+					</tr>
+					<tr>
+						<td><span id="__ML_bootloader">Boot Loader:</span></td>
+						<td><span id="__V_bootloader"></span></td>
+					</tr>
+				</tbody>
+			</table>
+                        <div id="license_row" style="display: none;">
+                                 <a id="license_link" href="#">Licenses</a>
+                        </div>
+		</div>
+	</body>
+</html>

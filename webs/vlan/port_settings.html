@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+	<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+	<head>
+
+		<meta http-equiv="pragma" content="no-cache" />
+		<meta http-equiv="cache-control" content="no-cache" />
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="/style/global_style.css" />
+		<link rel="stylesheet" type="text/css" href="/style/style_lan.css" />
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript" src="/js/airlib.js"></script>
+		<script type="text/javascript">
+	
+			var obj;
+	
+			function startQuery()
+			{
+				obj = new uiObject();
+				obj.addGet({module: "port_vlan", key: "ports"});
+				obj.addGet({module: "bridge_vlan", key: "settings"});
+	
+				obj.query();
+				obj.addField({table: "bridgeLan", module: "bridge_vlan", field: "name"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.name", fieldAlias: "name"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.iface", fieldAlias: "iface"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.pvid", fieldAlias: "pvid"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.tagging", fieldAlias: "tagging"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.portpriority", fieldAlias: "portpriority"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.funtag", fieldAlias: "funtag"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.funreg", fieldAlias: "funreg"});
+				obj.addField({table: "portVlanList", module: "port_vlan", field: "port@counter@.tagreadonly", fieldAlias: "tagreadonly"});
+				obj.addFilter({table: "portVlanList", module: "port_vlan", field: "name", property: "inst", compareType: "equal", compareValue: "port_vlan-0"});
+	
+				for(var i = 0; i < obj.tables['portVlanList'].length; i++)
+				{
+					obj.addGet({module: "port_vlan", key: "registered_vlans", value: obj.tables['portVlanList'][i]['port_vlan']['iface'].value});
+				}
+				obj.getValueQuery();
+	
+				for(var i = 0; i < obj.tables['portVlanList'].length; i++)
+				{
+					obj.addField({table: "portVlan"+ i +"MemberList", module: "port_vlan", field: obj.tables['portVlanList'][i]['port_vlan']['iface'].value + ".member@counter@"});
+				}
+	
+				createPortTable();
+			}
+	
+			$(document).ready(function()
+			{
+				startQuery();
+
+				globalView.addButtonClass();
+				globalView.addRowClass();
+			});
+	
+			function isUntagOption(index)
+			{
+				if(obj.tables["portVlan"+ index +"MemberList"].length > 1)
+				{
+					return true;
+				}
+	
+				return false;
+			}
+	
+			function createPortTable()
+			{
+				var temp = "<table  class='marginCenter lanVlanPortConfigurationTable globalBorder'> \
+							<thead> \
+								<tr> \
+									<th><span>" + getML("__ML_vlan_port") + "</span></th> \
+									<th><span>" + getML("__ML_vlan_port_name") + "</span></th> \
+									<th><span>" + getML("__ML_vlan_filter_untagged_frames") + "</span></th> \
+									<th><span>" + getML("__ML_vlan_filter_unregistered_frames") + "</span></th> \
+									<th><span>" + getML("__ML_vlan_table_title_pvid") +"</span></th> \
+									<th><span>"+ getML("__ML_vlan_port_priority") +"</span></th> \
+									<th><span>"+ getML("__ML_vlan_port_tagging") +"</span></th> \
+								</tr> \
+							</thead>";
+				temp += "<tbody>";
+				for(var i = 0; i < obj.tables['portVlanList'].length; i++)
+				{
+					temp += "<tr>";
+					temp += "<td><span id='port" + i + "'>" + i + "</span></td>";
+					temp += "<td><input id='portName" + i + "' type='text' value='" + obj.tables['portVlanList'][i]['port_vlan']['name'].value + "'/></td>";
+					temp += "<td><input id='fUntag" + i + "' type='checkbox' " + (obj.tables['portVlanList'][i]['port_vlan']['funtag'].value == 1 ? "checked='checked'" : "") + "/></td>";
+					temp += "<td><input id='fUnreg" + i + "' type='checkbox' " + (obj.tables['portVlanList'][i]['port_vlan']['funreg'].value == 1 ? "checked='checked'" : "") +  "/></td>";
+					temp += "<td><input id='pvid" + i + "' type='text' value='" + obj.tables['portVlanList'][i]['port_vlan']['pvid'].value + "'/></td>";
+					temp += "<td><select id='portPriority" + i + "'>";
+					for(var j = 0; j < 8; j++)
+					{
+						temp += "<option" + (obj.tables['portVlanList'][i]['port_vlan']['portpriority'].value == j ? " selected='selected'" : "") + ">" + j + "</option>";
+					}
+					temp += "</select></td>";
+					temp += "<td><select id='tagging" + i + "'" + ((obj.tables['portVlanList'][i]['port_vlan']['tagreadonly'].value == 1 || isUntagOption(i)) ? "disabled='disabled'" : "") + ">";
+					temp += "<option value='0'" + (obj.tables['portVlanList'][i]['port_vlan']['tagging'].value == 0 ? " selected='selected'" : "") + ">"+__ML_vlan_port_untag_all+"</option>";
+					temp += "<option value='1'" + (obj.tables['portVlanList'][i]['port_vlan']['tagging'].value == 1 ? " selected='selected'" : "") + ">"+__ML_vlan_port_tag_all+"</option>";
+					temp += "</select></td></tr>";
+				}
+				temp += "</tbody>";
+				temp += "</table>";
+				document.getElementById("tableDiv").innerHTML = temp;
+				showPage();
+			}
+	
+			function Save()
+			{
+				disablePage();
+				beginXML();
+				addCommand("cfgmgr-0", "begin_transaction", "port_vlan-0");
+				for(var i = 0; i < obj.tables['portVlanList'].length; i++)
+				{
+					if(obj.tables['portVlanList'][i]['port_vlan']['name'].value != getValues("portName" + i, "TextBoxObj")) addSet("port_vlan-0", "port_name", obj.tables['portVlanList'][i]['port_vlan']['iface'].value + "/" + getValues("portName" + i, "TextBoxObj"));
+					if(obj.tables['portVlanList'][i]['port_vlan']['funtag'].value != getValues("fUntag" + i, "CheckBoxObj")) addSet("port_vlan-0", "port_funtag", obj.tables['portVlanList'][i]['port_vlan']['iface'].value + "/" + getValues("fUntag" + i, "CheckBoxObj"));
+					if(obj.tables['portVlanList'][i]['port_vlan']['funreg'].value != getValues("fUnreg" + i, "CheckBoxObj")) addSet("port_vlan-0", "port_funreg", obj.tables['portVlanList'][i]['port_vlan']['iface'].value + "/" + getValues("fUnreg" + i, "CheckBoxObj"));
+					if(obj.tables['portVlanList'][i]['port_vlan']['pvid'].value != getValues("pvid" + i, "TextBoxObj")) addSet("port_vlan-0", "port_pvid", obj.tables['portVlanList'][i]['port_vlan']['iface'].value + "/" + getValues("pvid" + i, "TextBoxObj"));
+					if(obj.tables['portVlanList'][i]['port_vlan']['portpriority'].value != getValues("portPriority" + i, "SelectObjSelecting")) addSet("port_vlan-0", "port_portpriority", obj.tables['portVlanList'][i]['port_vlan']['iface'].value + "/" + getValues("portPriority" + i, "SelectObjSelecting"));
+					if(obj.tables['portVlanList'][i]['port_vlan']['tagging'].value != getValues("tagging" + i, "SelectObjSelecting")) addSet("port_vlan-0", "port_tagging", obj.tables['portVlanList'][i]['port_vlan']['iface'].value + "/" + getValues("tagging" + i, "SelectObjSelecting"));
+				}
+				addCommand("cfgmgr-0", "commit", "port_vlan-0");
+				addCommand("cfgmgr-0", "end_transaction", "port_vlan-0");
+	
+	/*			for(var i = 0; i < obj.tables['bridgeLan'].length; i++)
+				{
+					addCommand(obj.tables['bridgeLan'][i]['bridge_vlan']['name'].inst, "apply", "");
+				}
+	*/			
+	
+				addCommand("cfgmgr-0", "save", "");
+	
+				endXML();
+				sendAJAX(reboot);
+			}
+	
+			function reloadPage()
+			{
+				window.location.href="/vlan/port_settings.html";
+			}
+		</script>
+	</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+
+		<div id="contentDiv" style="display:none;">
+			<div class="textCenter title">
+				<span id="__ML_vlan_port_settings" ml="__ML_vlan_port_settings"></span>
+			</div>
+			<div class="marginCenter globalHeaderInfoDiv"><span id="__ML_vlan_port_config_info" ml="__ML_vlan_port_config_info"></span></div>
+			<br />
+
+			<div id="tableDiv"></div>
+
+			<div class="footer">
+				<input type="button" id="__ML_save" onclick="Save();" />&nbsp;
+				<input type="button" id="__ML_cancel" onclick="reloadPage();"/>
+			</div>
+
+		</div>
+	</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title></title>
+		<link href="../air.css" rel="stylesheet" type="text/css" />
+		<meta http-equiv="PRAGMA" content="NO-CACHE" />
+		<meta http-equiv="Cache-control" content="NO-CACHE" />
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	</head>
+	<script type="text/javascript" src="/js/jquery.js"></script>
+	<script type="text/javascript" src="/js/ui.js"></script>
+	<script type="text/javascript" src="/js/dlib.js"></script>
+	<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+	<script type="text/javascript" src="/js/airlib.js"></script>
+	<body>
+	</body>
+
+	<script type="text/javascript">
+		
+		var obj;
+			
+		function startQuery()
+		{
+			obj = new uiObject();
+			obj.addGet({module: "bridge_vlan", key: "settings"});
+			obj.addGet({module: "bridge_vlan", key: "ifaces"});
+			obj.addGet({module: "port_vlan", key: "ports"});
+					
+			obj.query();
+			
+			obj.addField({table: "bridgeLan", module: "bridge_vlan", field: "name"});
+			obj.addField({table: "bridgeLan", module: "bridge_vlan", field: "vlanid"});
+			
+			obj.addField({table: "portList", module: "port_vlan", field: "port@counter@.iface", fieldAlias: "iface"});
+			obj.addField({table: "portList", module: "port_vlan", field: "port@counter@.name", fieldAlias: "name"});
+			obj.addFilter({table: "portList", module: "port_vlan", field: "name", property: "inst", compareType: "equal", compareValue: "port_vlan-0"});
+			obj.addField({table: "ifaceList", module: "bridge_vlan", field: "iface@counter@", fieldAlias: "iface"});
+			
+			ResumeCreatePage();
+		}
+		
+		$(document).ready(function()
+		{
+			try
+			{
+				CreateWaitDiv();
+				CreateContentDiv("__ML_vlan_status_caption", "__ML_vlan_status_intro");
+				CreateSpace(2);
+				startQuery();
+			}
+			catch(ex)
+			{
+				alert(ex);
+			}
+		});
+
+		function ResumeCreatePage()
+		{try
+		{CreateControls();
+		ShowContent();}
+		catch(ex)
+		{
+			alert(ex);
+		}
+		}
+
+		function CreateControls()
+		{
+			try{
+				var table = new atTable("table_vlan");
+				table.firstRowIsColumnHeader = true;
+				var cellArray = new Array();
+				var span = new atSpan("span_vlanid_header", __ML_vlan_id);
+				var tableCell = new atTableCell("td_vlanid_header", span.get());
+				cellArray.push(tableCell.get());
+				var span = new atSpan("span_vlanid_header", __ML_vlan_name);
+				var tableCell = new atTableCell("td_vlanid_header", span.get());
+				cellArray.push(tableCell.get());
+				var span = new atSpan("span_vlan_members", __ML_vlan_members);
+				var tableCell = new atTableCell("td_vlan_members", span.get());
+				cellArray.push(tableCell.get());
+				table.addRow(cellArray);
+
+				for(var i = 0; i < obj.tables['bridgeLan'].length; i++)
+				{
+					var cellArray = new Array();
+					var span = new atSpan("span_vlanid_" + i, obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].value);
+					var tableCell = new atTableCell("td_vlanid_" + i, span.get());
+					cellArray.push(tableCell.get());
+					var span = new atSpan("span_vlan_name_" + i, obj.tables['bridgeLan'][i]['bridge_vlan']['name'].value);
+					var tableCell = new atTableCell("td_vlan_name_" + i, span.get());
+					cellArray.push(tableCell.get());
+
+
+					var tableCell = new atTableCell("td_iface_" + i);
+					
+					for(var j = 0; j < obj.tables['ifaceList'].length; j++)
+					{
+						if(obj.tables['bridgeLan'][i]['bridge_vlan']['vlanid'].inst == obj.tables['ifaceList'][j]['bridge_vlan']['iface'].inst)
+						{
+							for(var k = 0; k < obj.tables['portList'].length; k++)
+							{
+								if(obj.tables['ifaceList'][j]['bridge_vlan']['iface'].value == obj.tables['portList'][k]['port_vlan']['iface'].value)
+								{
+									var span = new atSpan("span_" + i + "_" + j, 	obj.tables['portList'][k]['port_vlan']['name'].value);
+									tableCell.append(span.get());
+									tableCell.append(document.createElement("br"));			
+								}
+							}
+						}
+					}
+					
+					cellArray.push(tableCell.get());
+					table.addRow(cellArray);
+				}
+
+				document.getElementById("contentDiv").appendChild(table.get());
+				CreateSpace(2);
+			}
+			catch(ex)
+			{
+				alert(ex);
+			}
+		}
+
+	</script>
+</html>

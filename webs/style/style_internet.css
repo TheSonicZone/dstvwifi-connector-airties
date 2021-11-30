@@ -1,0 +1,33 @@
+.internetTable
+{
+	width: 500px;
+	border: 1px solid #CCC;
+}
+
+.internetWanTable
+{
+	width: 600px;
+	border: 1px solid #CCC;
+}
+
+.internetAdvancedTable
+{
+	width: 300px;
+	border: 1px solid #CCC;
+}
+
+.internetDnsInfoDiv
+{
+	margin-bottom: 10px;
+	width: 500px;
+}
+
+.internetAdvancedInfoDiv
+{
+	margin-bottom: 10px;
+	width: 500px;
+}
+
+.internetDnsSettingsTable th, td, caption {
+	padding: 0px;
+}

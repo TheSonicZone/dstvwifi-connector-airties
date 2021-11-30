@@ -1,0 +1,606 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- Copyright AirTies Kablosuz Iletisim AR-GE Laboratuvarlari //-->
+<!-- Copyright AirTies Wireless Networks R & D Laboratories   //-->
+
+<html>
+	<head>
+		<META HTTP-EQUIV="Cache-control" CONTENT="NO-CACHE">
+		<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+		<META HTTP-EQUIV="EXPIRES" CONTENT="-1">
+		<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8">
+		
+		<link rel="stylesheet" href="/style/blueprint/screen.css" type="text/css" media="screen, projection" />
+		<link rel="stylesheet" href="/style/blueprint/print.css" type="text/css" media="print" /> 
+		<!--[if lt IE 8]>
+		  <link rel="stylesheet" href="/style/blueprint/ie.css" type="text/css" media="screen, projection" />
+		<![endif]-->
+		<link href="/style/global_style.css" rel="stylesheet" type="text/css" />
+		
+		<link type="text/css" href="/style/jqueryui/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+		<script type="text/javascript" src="/js/jquery.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui.js"></script>
+		
+		<script type="text/javascript" src="/global/global_view.js"></script>
+
+		<script type="text/javascript" src="/js/ui.js"></script>
+		<script type="text/javascript" src="/js/airtiespatterns.js"></script>
+		<script type="text/javascript">
+		
+		var tempQuery = new Array(); tempQuery.RelatedObject = "__V_tr069_syslog_server_ip_address"; tempQuery.ObjType = "TextBoxObj"; tempQuery.RelatedName = "TR069 " +  getML("__ML_log_settings_tr069_syslog_server_ip_address"); tempQuery.PageValBehaviour = [RegexField]; tempQuery.RegexPattern = "^(([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.)(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.)){2}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))$"; tempQuery.RegexFormat = "192.168.2.2"; tempQuery.PageValGroup = "save"; myPageData.push(tempQuery);
+		
+		var submitted = false;
+		
+		var __V_remote_log_enabled;
+		var __V_remote_log_ip_addr;
+		var __V_remote_log_port;
+		var __V_syslog_enabled;
+		var __V_syslog_level;
+		var __V_klog_enabled;
+		var __V_klog_level;
+		
+		var managers = new Array();
+		var instances = new Array();
+		var inst_empty_log = new Array();
+		var inst_log_levels = new Array();
+		
+		function send_remote_log_query ()
+		{
+			beginXML();
+			addCommand("cfgmgr-0","begin_transaction","logger-0");
+			addCommand("cfgmgr-0","begin_transaction","tr069-0");
+			addGet("logger-0","syslog");
+			addGet("tr069-0", "AGENTSYSLOGSERVERIP", "");
+			addCommand("cfgmgr-0","end_transaction","logger-0");
+			addCommand("cfgmgr-0","end_transaction","tr069-0");
+			endXML();
+			var fn = parse_remote_log_response;
+			sendAJAX(fn);
+		}
+		
+		function send_loglevels_query ()
+		{
+			beginXML();
+			addCommand("cfgmgr-0","begin_transaction","logger-0");
+			addGet("logger-0","kernelLog");
+			addGet("logger-0","syslogServer");
+			addCommand("cfgmgr-0","end_transaction","logger-0");
+			endXML();
+			var fn = parse_loglevels_response;
+			sendAJAX(fn);
+		}
+		
+		
+		function send_mngr_list_query ()
+		{
+			beginXML();
+			addQuery("devmgr-0","mngr_list");
+			endXML();
+			var fn = parse_mngr_list_response;
+			sendAJAX(fn);
+		}
+		
+		
+		function send_inst_list_query ()
+		{
+			beginXML();
+			for (var i=0;i<managers.length;i++)
+			{
+				addQuery("devmgr-0","inst_list",managers[i]);
+			}
+			endXML();
+			var fn = parse_inst_list_response;
+			sendAJAX(fn);
+		}
+		
+		function send_inst_loglevel_query ()
+		{
+			beginXML();
+			addCommand("cfgmgr-0","begin_transaction","logger-0");
+			for (var i=0;i<instances.length;i++)
+			{
+				if (instances[i] != "logger-0")
+				{
+					addCommand("cfgmgr-0","begin_transaction",instances[i]);
+				}
+				addGet("logger-0","moduleLog",instances[i]);
+				if (instances[i] != "logger-0")
+				{
+					addCommand("cfgmgr-0","end_transaction",instances[i]);
+				}
+			}
+			addCommand("cfgmgr-0","end_transaction","logger-0");
+			endXML();
+			var fn = parse_inst_loglevel_response;
+			sendAJAX(fn);
+		}
+		
+		function parse_inst_loglevel_response ()
+		{
+			for (var i=0;i<instances.length;i++)
+			{
+				inst_log_levels.push( getValue("logger-0", instances[i]+".loglevel") );
+				if (getValue("logger-0", instances[i]+".loglevel") == "")
+				{
+					inst_empty_log.push( instances[i] );
+				}
+			}
+			loadLoglevels();
+			showPage();
+		}
+		
+		function parse_inst_list_response ()
+		{
+			var i=0;
+			var instance_name;
+			for (var j=0;j<managers.length;j++)
+			{
+				i=0;
+				while ( (instance_name=getValue("devmgr-0", managers[j]+".inst"+i)) != "" )
+				{
+					instances.push(instance_name);
+					i=i+1;
+				}
+			}
+			//instances.push("core-0");
+			instances.sort();
+			send_inst_loglevel_query();
+		}
+		
+		function parse_mngr_list_response ()
+		{
+			var i=1;
+			var manager_name;
+			while ( ( manager_name = getValue("devmgr-0", "mngr"+i) ) != "" )
+			{
+				if ( (manager_name!="sysmgr") && (manager_name!="cfgmgr") && (manager_name!="devmgr") )
+				{
+					managers.push(manager_name);
+				}
+				i=i+1;
+			}
+			send_inst_list_query();
+		}
+		
+		function parse_loglevels_response ()
+		{
+			__V_syslog_enabled = getValue("logger-0","syslogServer.enable");
+			if (__V_syslog_enabled == "1" ) {
+		        document.getElementById("__V_syslog_enabled").checked = true;
+		    }
+		    else
+		    {
+		        document.getElementById("__V_syslog_enabled").checked = false;
+		    }
+			__V_syslog_level = getValue("logger-0","syslogServer.level");
+			__V_klog_enabled = getValue("logger-0","kernelLog.enable");
+			if (__V_klog_enabled == "1" ) {
+		        document.getElementById("__V_klog_enabled").checked = true;
+		    }
+		    else
+		    {
+		        document.getElementById("__V_klog_enabled").checked = false;
+		    }
+			__V_klog_level = getValue("logger-0","kernelLog.level");
+		
+			send_mngr_list_query();
+		}
+		
+		
+		function parse_remote_log_response ()
+		{
+			if(getValue("tr069-0", "SYSLOGSERVERIP") == "")
+			{
+				$("#__V_tr069_syslog_server_ip_address").attr("disabled", "disabled");
+			}
+			else
+			{
+				$("#__V_tr069_syslog_enabled").attr("checked", "checked");
+				$("#__V_tr069_syslog_server_ip_address").val(getValue("tr069-0", "SYSLOGSERVERIP"));
+			}
+		
+			__V_remote_log_enabled = getValue("logger-0","syslog.enable");
+			if (__V_remote_log_enabled == "1" ) {
+		        document.getElementById("__V_remote_log_enabled").checked = true;
+		    }
+		    else
+		    {
+		        document.getElementById("__V_remote_log_enabled").checked = false;
+		    }
+		    remote_log_enabled_click();
+			__V_remote_log_ip_addr = getValue("logger-0","syslog.serverIP");
+			__V_remote_log_port = getValue("logger-0","syslog.serverport");
+		
+			send_loglevels_query();
+		}
+		
+		function loadLoglevels()
+		{
+		    var loglevels_html =
+		    		"<table>" +
+		    			"<thead>" +
+		            		"<tr> " +
+			        			"<th>" +
+			        				"<strong><span id=\"__ML_instance_name\">Instance Name</span></strong>" +
+			        			"</th>" +
+			        			"<th>" +
+			        				"<strong><span id=__ML_loglevel>Log Level</span></strong>" +
+			        			"</th>"+
+		        			"</tr>"+
+		        		"</thead>" +
+			        	"<tbody>";
+		    for (var i=0; i<instances.length; i++)
+		    {
+		    	var logLevel = true;
+		    	for (var j=0; j<inst_empty_log.length; j++)
+		    	{
+		    		if (instances[i] == inst_empty_log[j])
+		    		{
+		    			logLevel = false;
+		    			break;
+		    		}
+		    	}
+		    	if (logLevel == true)
+		    	{
+		    		if (instances[i] == "logger-0")
+		    		{
+		    			instances[i] = "logger";
+		    		}
+		        	loglevels_html +=
+		            		"<tr>" +
+		        			"<td>" +
+		        				"<strong>"+instances[i]+"</strong>" +
+		        			"</td>" +
+		    				"<td>" +
+		    					"<select id="+instances[i]+"_loglevel>" +
+								"<option value=\"\">---</option>"+
+								"<option id=\"__ML_emergency\" value=\"emerg\"> Emergency </option>"+
+								"<option id=\"__ML_alert\" value=\"alert\">	Alert	</option>"+
+								"<option id=\"__ML_critical\" value=\"crit\">	Critical	</option>"+
+								"<option id=\"__ML_error\" value=\"err\">	Error	</option>"+
+								"<option id=\"__ML_warning\" value=\"warning\">	Warning	</option>"+
+								"<option id=\"__ML_notice\" value=\"notice\">	Notice	</option>"+
+								"<option id=\"__ML_info\" value=\"info\">	Information	</option>"+
+								"<option id=\"__ML_debug\" value=\"debug\">	Debug	</option>"+
+		        				"</select>" +
+		        			"</td>"+
+		        		"</tr>";
+		        }
+		    }
+
+		    loglevels_html +=
+		            		"<tr> " +
+		        			"<td>" +
+		        				"<strong><span id=__ML_set_all>Set All</span></strong>" +
+		        			"</td>" +
+		    				"<td>" +
+							"<select id=all_loglevel onChange=\"setAll(this)\">" +
+								"<option value=\"\">---</option>"+
+								"<option id=\"__ML_emergency\" value=\"emerg\">	Emergency	</option>"+
+								"<option id=\"__ML_alert\" value=\"alert\">	Alert	</option>"+
+								"<option id=\"__ML_critical\" value=\"crit\">	Critical	</option>"+
+								"<option id=\"__ML_error\" value=\"err\">	Error	</option>"+
+								"<option id=\"__ML_warning\" value=\"warning\">	Warning	</option>"+
+								"<option id=\"__ML_notice\" value=\"notice\">	Notice	</option>"+
+								"<option id=\"__ML_info\" value=\"info\">	Information	</option>"+
+								"<option id=\"__ML_debug\" value=\"debug\">	Debug	</option>"+
+							"</select>" +
+		        			"</td>"+
+		        		"</tr>"+
+	        		"</tbody>"+
+	        	"</table>";
+		
+		    document.getElementById("loglevels").innerHTML = loglevels_html;
+		    //for (var i=0;i<instances.length;i++)
+		    for (var i=0; i<instances.length; i++)
+		    {
+		    	var show_log = true;
+		    	for (var j=0; j<inst_empty_log.length; j++)
+		    	{
+		    		if (instances[i] == inst_empty_log[j])
+		    		{
+		    			show_log = false;
+					break;
+		    		}
+		    	}
+		    	if (show_log == true)
+		    	{
+		        	document.getElementById(instances[i]+"_loglevel").value = inst_log_levels[i];
+		        }
+		    }
+		}
+		function CheckIP (IPvalue) { //GM: Returns 1 if correct
+		  	out=1;
+		  	//errorString = "";
+		  	//2:invalid_ip_ex 3:invalid_ip_out_of_range 5:
+		 	//GM: Address type switched
+		  	var ipArray = IPvalue.split(".");
+		  	if (!ipArray || ipArray.length != 4)
+			{
+		    		//errorString += theName+__js_invalid_ip_ex;
+				out*=2;
+			}
+		  	else {
+		    		var i = 0;
+		    		for (i = 0; i < 4; i++) {
+		      			thisSegment = ipArray[i];
+		
+		      			if (thisSegment.length > 0) {
+		        			if (!(thisSegment >=0 && thisSegment <= 255)) { //check if number?
+		          				//errorString += theName + __js_invalid_ip_out_of_range ;
+							out*=3;
+		          				i = 4;
+		        			}
+		      			}
+					else
+		         		{
+						//errorString += theName+" "+__js_invalid_ip_ex ;
+						out*=2;
+		    			}
+		  		}
+			}
+		  	return out;
+		}
+		function submit_settings()
+		{
+		    	beginXML();
+		    	addCommand("cfgmgr-0","begin_transaction","logger-0");
+			for (var i=0;i<instances.length;i++)
+			{
+				var save_log = true;
+				for (var j=0; j<inst_empty_log.length; j++)
+				{
+					if (instances[i] == inst_empty_log[j])
+					{
+						save_log = false;
+						break;
+					}
+				}
+				if (save_log == true)
+				{
+					if (instances[i] != "logger")
+					{
+						addCommand("cfgmgr-0", "begin_transaction", instances[i]);
+					}
+		
+					if (instances[i] == "logger")
+					{
+						addSet("logger-0","moduleLog.level", "logger-0" + ":" + document.getElementById("logger" + "_loglevel").value);
+					}
+					else
+					{
+						addSet("logger-0","moduleLog.level", instances[i]+":" + document.getElementById(instances[i]+"_loglevel").value);
+						addCommand("cfgmgr-0", "commit", instances[i]);
+					}
+				}
+			}
+		
+			if ( document.getElementById("__V_remote_log_enabled").checked == true )
+			{
+		        	__V_remote_log_enabled=1;
+		    	}
+		    	else
+		    	{
+		        	__V_remote_log_enabled=0;
+		    	}
+			addSet("logger-0","syslog.enable",__V_remote_log_enabled);
+			//if(document.getElementById("__V_remote_log_enabled").checked)
+			addSet("logger-0","syslog.serverIP",getVar("__V_remote_log_ip_addr"));
+			addSet("logger-0","syslog.serverPort",getVar("__V_remote_log_port"));
+		
+			if ( document.getElementById("__V_syslog_enabled").checked == true )
+			{
+		        	__V_syslog_enabled=1;
+		    	}
+		    	else
+		    	{
+		        	__V_syslog_enabled=0;
+		    	}
+		    	addSet("logger-0","syslogServer.enable",__V_syslog_enabled);
+		    	addSet("logger-0","syslogServer.level",getVar("__V_syslog_level"));
+		    	if ( document.getElementById("__V_klog_enabled").checked == true )
+		    	{
+		        	__V_klog_enabled=1;
+		    	}
+		    	else
+		    	{
+		        	__V_klog_enabled=0;
+		    	}
+		    	addSet("logger-0","kernelLog.enable",__V_klog_enabled);
+		    	addSet("logger-0","kernelLog.level",getVar("__V_klog_level"));
+		
+			addCommand("cfgmgr-0","begin_transaction","tr069-0");
+			addSet("tr069-0","AGENTSYSLOGSERVERIP", $("#__V_tr069_syslog_enabled").is(":checked") ? $("#__V_tr069_syslog_server_ip_address").val() : "");
+			addCommand("cfgmgr-0","commit","tr069-0");
+		
+		    	addCommand("cfgmgr-0", "commit", "logger-0");
+		    	addCommand("cfgmgr-0", "save", "");
+			addCommand("cfgmgr-0","end_transaction","tr069-0");
+			addCommand("cfgmgr-0","end_transaction","logger-0");
+			for (var i=0; i<instances.length; i++)
+			{
+				if (instances[i] != "logger")
+				{
+					addCommand("cfgmgr-0","end_transaction",instances[i]);
+				}
+			}
+		
+			addCommand("tr069-0", "apply","");
+			addCommand("logger-0", "apply","");
+		
+		    	endXML();
+		    	var fn = reloadPage;
+		    	sendAJAX(fn);
+		}
+		
+		function tr069EnableClicked()
+		{
+			if($("#__V_tr069_syslog_enabled").is(":checked"))
+			{
+				$("#__V_tr069_syslog_server_ip_address").removeAttr("disabled");
+			}
+			else
+			{
+				$("#__V_tr069_syslog_server_ip_address").attr("disabled", "disabled");
+			}
+		}
+		
+		function reloadPage()
+		{
+			window.location.href = "/report/log_settings.html";
+		}
+		
+		function ClickSave() {
+		    if (!submitted)
+		    {
+		        var checkingLanIp = 1;
+		        if(document.getElementById("__V_remote_log_enabled").checked) checkingLanIp = CheckIP(getVar("__V_remote_log_ip_addr"));
+		        var err= __ML_LAN_ERROR_IP_VALUE;
+		        if(checkingLanIp != 1)
+		        {
+			        err = err + "\n" + __ML_lan_ip_addr;
+			    }
+			    if(!(checkingLanIp==1))
+			    {
+				    alert(err);
+				    return;
+			    }
+		        submitted = true;
+		        disablePage();
+		        submit_settings();
+		    }
+		}
+		
+		function setAll( menu_obj)
+		{
+		    for (var i=0;i<instances.length;i++)
+		    {
+		    	// radio button: document.getElementById(instances[i]+"_loglevel_"+inst_log_levels[i]).checked = true;
+		    	try
+		        {
+		        	document.getElementById(instances[i]+"_loglevel").value = menu_obj.value;
+		        }
+				catch(err)
+		        {
+		        }
+		
+		    }
+		}
+		
+		function remote_log_enabled_click()
+		{
+		    if(document.getElementById("__V_remote_log_enabled").checked)
+		    {
+		        document.getElementById("__V_remote_log_ip_addr").readOnly="";
+		        $("#__V_remote_log_ip_addr").removeAttr('disabled');
+		        document.getElementById("__V_remote_log_port").readOnly="";
+		        $("#__V_remote_log_port").removeAttr('disabled');
+		    }
+		    else
+		    {
+		        document.getElementById("__V_remote_log_ip_addr").readOnly="readonly";
+		        $("#__V_remote_log_ip_addr").attr('disabled','disabled');
+		        document.getElementById("__V_remote_log_port").readOnly="readonly";
+		        $("#__V_remote_log_port").attr('disabled','disabled');
+		
+		    }
+		
+		
+		}
+		
+		$(document).ready(function() {
+		    send_remote_log_query();
+
+			if(__DEF_showTr069Menu == 0) $("#tr_tr069_syslog").hide();
+
+			globalView.addRowClass();
+			globalView.addButtonClass();
+		});
+		
+		</script>
+	</head>
+	<body>
+		<div id="waitDiv" class="center">
+			<p>
+				<script language="javascript">document.write(__ML_please_wait);</script>
+			</p>
+			<img src="/images/ajax-loader.gif"/>
+		</div>
+		
+		<div id="contentDiv" style="display:none">
+			<div class="textCenter title">
+				<span id="__ML_log_settings" ml="__ML_log_settings"></span>
+			</div>
+			<div class="center globalHeaderInfoDiv">
+				<span id="__ML_log_settings_intro" ml="__ML_log_settings_intro"></span>
+			</div>
+        	<table class="marginCenter globalBorder widthAuto">
+        		<tr>
+        			<td class="textCenter" id="loglevels" colspan="5">
+                    </td>
+        		</tr>
+        		<tr>
+        			<td>
+        				<input type="checkbox" id="__V_syslog_enabled"><strong><span id="__ML_syslog_enabled">Syslog Enabled</span><strong>
+        			</td>
+        			<td>
+        				<strong><span id="__ML_syslog_level">Log Level:</span></strong>
+        				<select id=__V_syslog_level>
+        					<option id="__ML_emergency" value="emerg">	Emergency	</option>
+        					<option id="__ML_alert" value="alert">	Alert	</option>
+        					<option id="__ML_critical" value="crit">	Critical	</option>
+        					<option id="__ML_error" value="err">	Error	</option>
+        					<option id="__ML_warning" value="warning">	Warning	</option>
+        					<option id="__ML_notice" value="notice">	Notice	</option>
+        					<option id="__ML_info" value="info">	Information	</option>
+        					<option id="__ML_debug" value="debug">	Debug	</option>
+        				</select>
+        			</td>
+        		</tr>
+        		<tr>
+        			<td>
+        				<input type="checkbox" id="__V_klog_enabled"><strong><span id="__ML_klog_enabled">Kernel Log Enabled</span><strong>
+        			</td>
+        			<td>
+        				<strong><span id="__ML_klog_level">Log Level:</span></strong>
+        				<select id=__V_klog_level>
+        					<option id="__ML_emergency" value="emerg">	Emergency	</option>
+        					<option id="__ML_alert" value="alert">	Alert	</option>
+        					<option id="__ML_critical" value="crit">	Critical	</option>
+        					<option id="__ML_error" value="err">	Error	</option>
+        					<option id="__ML_warning" value="warning">	Warning	</option>
+        					<option id="__ML_notice" value="notice">	Notice	</option>
+        					<option id="__ML_info" value="info">	Information	</option>
+        					<option id="__ML_debug" value="debug">	Debug	</option>
+        				</select>
+        				<br>
+        			</td>
+    			</tr>
+    			<tr>
+        			<td>
+        				<input type="checkbox" id="__V_remote_log_enabled" onclick="remote_log_enabled_click();"><strong><span id="__ML_remote_log_enabled">Remote Logging Enabled</span><strong>
+        			</td>
+        			<td>
+        				<strong><span id="__ML_ip_addr">IP Address:</span></strong>
+        				<input type="text" id="__V_remote_log_ip_addr">
+        				<strong><span id="__ML_port">Port:</span></strong>
+        				<input type="text" id="__V_remote_log_port" size="5" maxlength="5">
+        			</td>
+				</tr>
+				<tr id="tr_tr069_syslog">
+					<td>
+		    			<input type="checkbox" id="__V_tr069_syslog_enabled" onclick="tr069EnableClicked();"/>
+		    			<strong><span id="__ML_log_settings_tr069_syslog_server_enabled"></span></strong>
+					</td>
+					<td>
+			    		<strong><span id="__ML_log_settings_tr069_syslog_server_ip_address">IP Address:</span></strong>
+						<input type="text" id="__V_tr069_syslog_server_ip_address"/>
+					</td>
+				</tr>
+			</table>
+			<div class="footer">
+				<input type="button" id="__ML_save" value="Save" name="save" onClick="if(PageValidate(this.name)) ClickSave()">
+				<input type="button" id="__ML_cancel" value="Cancel" onClick="reloadPage()">
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/webs/cgi-bin/cert_load
