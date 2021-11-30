@@ -2,7 +2,7 @@
 Hacking and more of this crippled Wi-Fi access point
 
 ## Background
-MonoChoice sold these back in '15 as a means to connect the DSTV Explora to the internet for those who were 
+MonoChoice sold these back in '15 as a means to connect the DSTV Explora to the internet for those maroons who were 
 too thick to buy an Ethernet cable and plug it into the STB. At first it was possible to configure it as a Wi-Fi AP
 but then they upgraded the firmware remotely and disabled it rendering this item useless for anything except MonoChoice's
 DSTV Explora.
